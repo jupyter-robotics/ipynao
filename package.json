@@ -26,7 +26,7 @@
   "types": "./lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/QuantStack/ipynao"
+    "url": "https://github.com/ihuicatl/ipynao"
   },
   "scripts": {
     "build": "yarn run build:lib && yarn run build:nbextension && yarn run build:labextension:dev",
@@ -34,7 +34,8 @@
     "build:labextension": "jupyter labextension build .",
     "build:labextension:dev": "jupyter labextension build --development True .",
     "build:lib": "tsc",
-    "build:nbextension": "webpack",
+    "build:nbextension": "webpack --mode=production",
+    "build:nbextension:dev": "webpack --mode=development",
     "clean": "yarn run clean:lib && yarn run clean:nbextension && yarn run clean:labextension",
     "clean:lib": "rimraf lib",
     "clean:labextension": "rimraf ipynao/labextension",
