@@ -12,7 +12,10 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 // Import the CSS
 import '../css/widget.css';
 
+import { QiSession } from './naoqi';
+
 export class NaoRobotModel extends DOMWidgetModel {
+  session: any;
   defaults() {
     return {
       ...super.defaults(),
@@ -24,6 +27,13 @@ export class NaoRobotModel extends DOMWidgetModel {
       _view_module_version: NaoRobotModel.view_module_version,
       value: 'Hello World',
     };
+  }
+
+  initialize(attributes: any, options: any): void {
+    
+    this.session = QiSession("hi", "ho", "he");
+    console.log("TODO: init QiSession");
+    
   }
 
   static serializers: ISerializers = {
