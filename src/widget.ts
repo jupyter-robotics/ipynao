@@ -12,7 +12,7 @@ import { MODULE_NAME, MODULE_VERSION } from './version';
 // Import the CSS
 import '../css/widget.css';
 
-import { QiSession } from './naoqi';
+import { QiSession } from './qimessaging';
 
 export class NaoRobotModel extends DOMWidgetModel {
   session: any;
@@ -31,7 +31,7 @@ export class NaoRobotModel extends DOMWidgetModel {
 
   initialize(attributes: any, options: any): void {
     super.initialize(attributes, options);
-    
+
     this.session = QiSession("hi", "ho", "he");
     console.log("TODO: init QiSession");
     
