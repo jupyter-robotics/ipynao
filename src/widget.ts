@@ -32,8 +32,8 @@ export class NaoRobotModel extends DOMWidgetModel {
   initialize(attributes: any, options: any): void {
     super.initialize(attributes, options);
 
-    this.session = QiSession("hi", "ho", "he");
-    console.log("TODO: init QiSession");
+    this.session = new QiSession();
+
     
   }
 
