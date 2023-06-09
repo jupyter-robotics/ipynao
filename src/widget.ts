@@ -26,6 +26,7 @@ export class NaoRobotModel extends DOMWidgetModel {
       _view_module: NaoRobotModel.view_module,
       _view_module_version: NaoRobotModel.view_module_version,
       value: 'Hello World',
+      session: QiSession,
     };
   }
 

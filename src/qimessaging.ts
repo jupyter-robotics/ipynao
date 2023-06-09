@@ -17,6 +17,8 @@ export class QiSession {
 
     constructor() {
         console.log("DBG Emile qim about to connect w/17");
+        // @ts-ignore
+        window["sock"] = io;
         let _socket = io.connect(
             "nao:nao@nao.local:80", 
             { resource: "libs/qimessaging/2/socket.io",
