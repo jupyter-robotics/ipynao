@@ -14,10 +14,18 @@ export function QiSession(
     this: any, connected: any, disconnected: any, host: any) 
 {
     console.log("DBG Emile qim about to connect w/17");
-    let _socket = io(
-        "http://" + (host ? host : window.location.host), 
+    // let _socket = io(
+        // "http://" + (host ? host : window.location.host), 
         // { resource: "libs/qimessaging/2/socket.io", 'force new connection': true }
-    );
+    // );
+
+    // TODO: get robot IP
+    let _socket = io("nao@nao.local:80");
+
+    // @ts-ignore
+    window["socks"] = _socket;
+    console.log("CONNECTED?", _socket.connected);
+
     console.log("DBG Emile qim connecting..");
 
     let _dfd = new Array();
