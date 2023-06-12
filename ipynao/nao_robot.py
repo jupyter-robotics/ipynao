@@ -9,8 +9,10 @@ TODO: Add module docstring
 """
 
 from ipywidgets import DOMWidget
-from traitlets import Unicode
+from traitlets import Unicode, Integer
 from ._frontend import module_name, module_version
+
+import asyncio
 
 
 class NaoRobotWidget(DOMWidget):
@@ -19,28 +21,39 @@ class NaoRobotWidget(DOMWidget):
     _model_name = Unicode('NaoRobotModel').tag(sync=True)
     _model_module = Unicode(module_name).tag(sync=True)
     _model_module_version = Unicode(module_version).tag(sync=True)
-    # _model_id = Unicode('NaoRobotID').tag(sync=True)
     _view_name = Unicode('NaoRobotView').tag(sync=True)
     _view_module = Unicode(module_name).tag(sync=True)
     _view_module_version = Unicode(module_version).tag(sync=True)
 
     value = Unicode('Hello World').tag(sync=True)
-
-    # def __init__(self):
-    #     # self.qi_session = qi_session
-    #     print("RRR I'm initting")
+    counter = Integer(0).tag(sync=True) # TODO: readonly
 
     # def send(self, command, args):
     #     data = {}
     #     data["command"] = str(command)
     #     data["args"] = args
-    #     # self.qi_session.send(data)
+    #     print("SENDING CMD>>>>>>>")
+        # self.qi_session.send(data)
 
-    # def connect(self):
-    #     print("Trying to connect")
-    #     self.send(
-    #         command="connect",
-    #         args=[]
-    #     )
+    def connect(self):
+        print("Trying to connect")
+        self.send("connect"
+            # command="connect",
+            # args=[]
+        )
+        self.value = "Cooonnect"
 
+    def wait_for_change(widget, value):
+        """
+        Wait for a change in a widget's value.
+        """
+        future = asyncio.Future()
+
+        def getvalue(change):
+            # make the new value available
+            future.set_result(change.new)
+            widget.unobserve(getvalue, value)
+
+        widget.observe(getvalue, value)
+        return future
     

@@ -28,6 +28,7 @@ export class NaoRobotModel extends DOMWidgetModel {
       _view_module: NaoRobotModel.view_module,
       _view_module_version: NaoRobotModel.view_module_version,
       value: 'Hello World',
+      counter: 0,
     };
   }
 
@@ -36,10 +37,23 @@ export class NaoRobotModel extends DOMWidgetModel {
     // this.qiSession = new QiSession();
     console.log("INI JS");
 
-    // this.on("msg:custom", async (command: any, buffers: any) => {
-    //   this.onCommand(command, buffers);
-    //   console.log("RRR msg:custom");
-    // })
+    
+
+    // TODO:
+    this.on("msg:custom", async (command: any, buffers: any) => {
+      // this.onCommand(command, buffers);
+      console.log(command);
+      this.qiSession = new QiSession();
+      console.log("Session created");
+      let tts = await this.qiSession.service("ALTextToSpeech");
+      console.log("tts done");
+      await tts.say("hello");
+      console.log("RRR msg:custom");
+
+      let newvalue : Number = 1;
+      this.set('counter', newvalue);
+      this.save_changes();
+    })
   }
 
   // async connect() {
@@ -64,6 +78,7 @@ export class NaoRobotModel extends DOMWidgetModel {
     // Add any extra serializers here
   };
 
+  // var qiSession = // TODO:
   static model_name = 'NaoRobotModel';
   static model_module = MODULE_NAME;
   static model_module_version = MODULE_VERSION;
