@@ -13,7 +13,7 @@ export class QiSession {
     disconnected: any;
     host: any;
     service: any;
-    this: any;
+    isConnected: Boolean = false;
 
     constructor() {
         console.log("DBG Emile qim about to connect w/17");

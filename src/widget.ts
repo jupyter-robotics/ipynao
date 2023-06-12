@@ -15,28 +15,49 @@ import '../css/widget.css';
 import { QiSession } from './qimessaging';
 
 export class NaoRobotModel extends DOMWidgetModel {
-  session: any;
+  qiSession: QiSession;
+
   defaults() {
     return {
       ...super.defaults(),
       _model_name: NaoRobotModel.model_name,
       _model_module: NaoRobotModel.model_module,
       _model_module_version: NaoRobotModel.model_module_version,
+      // _model_id: NaoRobotModel.model_id,
       _view_name: NaoRobotModel.view_name,
       _view_module: NaoRobotModel.view_module,
       _view_module_version: NaoRobotModel.view_module_version,
       value: 'Hello World',
-      session: QiSession,
     };
   }
 
   initialize(attributes: any, options: any): void {
     super.initialize(attributes, options);
+    // this.qiSession = new QiSession();
+    console.log("INI JS");
 
-    this.session = new QiSession();
-
-    
+    // this.on("msg:custom", async (command: any, buffers: any) => {
+    //   this.onCommand(command, buffers);
+    //   console.log("RRR msg:custom");
+    // })
   }
+
+  // async connect() {
+  //   if (!this.qiSession.isConnected) {
+  //     console.log("RRR not connected, trying again");
+  //     this.qiSession = new QiSession();
+  //   }
+  // }
+
+  // private async onCommand(command: any, buffers: any) {
+  //   console.log("onCommand", command);
+  //   const cmd = command["command"];
+    
+  //   if (cmd === "connect") {
+  //     console.log("RRR the command was connect");
+  //     await this.connect();
+  //   }
+  // }
 
   static serializers: ISerializers = {
     ...DOMWidgetModel.serializers,
@@ -46,6 +67,7 @@ export class NaoRobotModel extends DOMWidgetModel {
   static model_name = 'NaoRobotModel';
   static model_module = MODULE_NAME;
   static model_module_version = MODULE_VERSION;
+  // static model_id = 'NaoRobotID';
   static view_name = 'NaoRobotView'; // Set to null if no view
   static view_module = MODULE_NAME; // Set to null if no view
   static view_module_version = MODULE_VERSION;
