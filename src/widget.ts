@@ -34,26 +34,14 @@ export class NaoRobotModel extends DOMWidgetModel {
 
   initialize(attributes: any, options: any): void {
     super.initialize(attributes, options);
-    // this.qiSession = new QiSession();
-    console.log("INI JS");
 
-    
+    this.on("msg:custom", this.onCommand);
 
-    // TODO:
-    this.on("msg:custom", async (command: any, buffers: any) => {
-      // this.onCommand(command, buffers);
-      console.log(command);
-      this.qiSession = new QiSession();
-      console.log("Session created");
-      let tts = await this.qiSession.service("ALTextToSpeech");
-      console.log("tts done");
-      await tts.say("hello");
-      console.log("RRR msg:custom");
 
-      let newvalue : Number = 1;
-      this.set('counter', newvalue);
-      this.save_changes();
-    })
+    //   let newValue : Number = 1;
+    //   this.set('counter', newValue);
+    //   this.save_changes();
+    // })
   }
 
   // async connect() {
@@ -63,15 +51,32 @@ export class NaoRobotModel extends DOMWidgetModel {
   //   }
   // }
 
-  // private async onCommand(command: any, buffers: any) {
-  //   console.log("onCommand", command);
-  //   const cmd = command["command"];
+  private async onCommand(commandData: any, buffers: any) {
+    console.log("REMOVE onCommand", commandData);
+    const cmd = commandData["command"];
     
-  //   if (cmd === "connect") {
-  //     console.log("RRR the command was connect");
-  //     await this.connect();
-  //   }
-  // }
+    // TODO: change to switch case
+    if (cmd === "connect") {
+      console.log("REMOVE the command was to connect");
+      this.qiSession = new QiSession();
+      let tts = await this.qiSession.service("ALTextToSpeech");
+      await tts.say("hello there there");
+      console.log("REMOVE tts after await");
+    }
+
+    if (cmd === "ALTextToSpeech") {
+      console.log("REMOVE command texttospeech");
+      let tts = await this.qiSession.service("ALTextToSpeech");
+      await tts.say(commandData["speech"]);
+    }
+
+    // TODO: figure out async
+    // let newValue : Number = 1;
+    // this.set("counter", newValue);
+    // this.save_changes();
+
+    console.log("REMOVE counter set");
+  }
 
   static serializers: ISerializers = {
     ...DOMWidgetModel.serializers,
@@ -82,7 +87,6 @@ export class NaoRobotModel extends DOMWidgetModel {
   static model_name = 'NaoRobotModel';
   static model_module = MODULE_NAME;
   static model_module_version = MODULE_VERSION;
-  // static model_id = 'NaoRobotID';
   static view_name = 'NaoRobotView'; // Set to null if no view
   static view_module = MODULE_NAME; // Set to null if no view
   static view_module_version = MODULE_VERSION;

@@ -9,10 +9,24 @@ TODO: Add module docstring
 """
 
 from ipywidgets import DOMWidget
-from traitlets import Unicode, Integer
+from traitlets import Unicode, Integer, Bool
 from ._frontend import module_name, module_version
 
 import asyncio
+
+def wait_for_change(widget, value):
+    """
+    Wait for a change in a widget's value.
+    """
+    future = asyncio.Future()
+
+    def getvalue(change):
+        # make the new value available
+        future.set_result(change.new)
+        widget.unobserve(getvalue, value)
+
+    widget.observe(getvalue, value)
+    return future
 
 
 class NaoRobotWidget(DOMWidget):
@@ -26,34 +40,27 @@ class NaoRobotWidget(DOMWidget):
     _view_module_version = Unicode(module_version).tag(sync=True)
 
     value = Unicode('Hello World').tag(sync=True)
-    counter = Integer(0).tag(sync=True) # TODO: readonly
+    counter = Integer(0, read_only=True).tag(sync=True)
+    connected = Bool(False).tag(sync=True)
 
-    # def send(self, command, args):
-    #     data = {}
-    #     data["command"] = str(command)
-    #     data["args"] = args
-    #     print("SENDING CMD>>>>>>>")
-        # self.qi_session.send(data)
+    def connect(self, ip_address="nao.local"):
+        self.value = "Connecting..."
+        data = {}
+        data["command"] = str("connect")
+        data["ipAddress"] = str(ip_address)
+        self.send(data)
 
-    def connect(self):
-        print("Trying to connect")
-        self.send("connect"
-            # command="connect",
-            # args=[]
-        )
-        self.value = "Cooonnect"
+        # TODO: figure out async
+        # await wait_for_change(self, "counter")
+        # self.value = "after waiting for change"
+        self.connected = True
+        self.value = "Connected."
 
-    def wait_for_change(widget, value):
-        """
-        Wait for a change in a widget's value.
-        """
-        future = asyncio.Future()
-
-        def getvalue(change):
-            # make the new value available
-            future.set_result(change.new)
-            widget.unobserve(getvalue, value)
-
-        widget.observe(getvalue, value)
-        return future
-    
+    def ALTextToSpeech(self, text):
+        if (self.connected):
+            data = {}
+            data["command"] = str("ALTextToSpeech")
+            data["speech"] = str(text)
+            self.send(data)
+        else:
+            self.value = "Not connected"

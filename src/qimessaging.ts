@@ -16,14 +16,14 @@ export class QiSession {
     isConnected: Boolean = false;
 
     constructor() {
-        console.log("DBG Emile qim about to connect w/17");
+        // console.log("DBG Emile qim about to connect w/17"); REMOVE
         // @ts-ignore
         window["sock"] = io;
         let _socket = io.connect(
             "nao:nao@nao.local:80", 
             { resource: "libs/qimessaging/2/socket.io",
             'force new connection': true });
-        console.log("DBG Emile qim connecting..");
+        // console.log("DBG Emile qim connecting.."); REMOVE
         let _dfd = new Array();
         let _sigs = new Array();
         let _idm = 0;
@@ -34,7 +34,7 @@ export class QiSession {
 
 
         _socket.on('reply', function (data : any) {
-            console.log("DBG Emile qim reply");
+            // console.log("DBG Emile qim reply"); REMOVE
             let idm = data["idm"];
             if (data["result"] != null && data["result"]["metaobject"] != undefined) {
                 // let o = new Object();
@@ -75,14 +75,14 @@ export class QiSession {
             delete _dfd[idm];
         });
         _socket.on('error', function (data : any) {
-            console.log("DBG Emile qim error");
+            // console.log("DBG Emile qim error"); REMOVE
             if (data["idm"] != undefined) {
                 _dfd[data["idm"]].reject(data["result"]);
                 delete _dfd[data["idm"]];
             }
         });
         _socket.on('signal', function (data : any) {
-            console.log("DBG Emile qim signal");
+            // console.log("DBG Emile qim signal"); REMOVE
             let res = data["result"];
             let callback = _sigs[res["obj"]][res["signal"]][res["link"]];
             if (callback != undefined) {
@@ -91,7 +91,7 @@ export class QiSession {
             }
         });
         _socket.on('disconnect', function (data : any) {
-            console.log("DBG Emile qim disconnect");
+            // console.log("DBG Emile qim disconnect"); REMOVE
             for (let idm in _dfd) {
                 _dfd[idm].reject("Call " + idm + " canceled: disconnected");
                 delete _dfd[idm];
@@ -157,7 +157,7 @@ export class QiSession {
         this.service = createMetaCall("ServiceDirectory", "service", "data");
         // let _self = this;
         _socket.on('connect', function () {
-            console.log("DBG Emile qim connect");
+            // console.log("DBG Emile qim connect"); REMOVE
             // @ts-ignore
             if (this.connected) {
                 // connected(_self);
@@ -165,6 +165,6 @@ export class QiSession {
 
             }
         });
-        console.log("DBG Emile qim done with init");
+        // console.log("DBG Emile qim done with init"); REMOVE
     }
 }
