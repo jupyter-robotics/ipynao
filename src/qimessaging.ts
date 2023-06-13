@@ -9,18 +9,15 @@
 import { io } from "nao-socket.io";
 
 export class QiSession {
-    connected: any;
+    connected: Boolean = false;
     disconnected: any;
     host: any;
     service: any;
-    isConnected: Boolean = false;
 
-    constructor() {
+    constructor(ipAddress: any = "nao.local") {
         // console.log("DBG Emile qim about to connect w/17"); REMOVE
-        // @ts-ignore
-        window["sock"] = io;
         let _socket = io.connect(
-            "nao:nao@nao.local:80", 
+            "nao:nao@" + ipAddress + ":80", 
             { resource: "libs/qimessaging/2/socket.io",
             'force new connection': true });
         // console.log("DBG Emile qim connecting.."); REMOVE
@@ -31,7 +28,6 @@ export class QiSession {
         interface MetaObject {
             __MetaObject?: any;
         }
-
 
         _socket.on('reply', function (data : any) {
             // console.log("DBG Emile qim reply"); REMOVE

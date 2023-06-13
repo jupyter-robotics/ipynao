@@ -23,7 +23,6 @@ export class NaoRobotModel extends DOMWidgetModel {
       _model_name: NaoRobotModel.model_name,
       _model_module: NaoRobotModel.model_module,
       _model_module_version: NaoRobotModel.model_module_version,
-      // _model_id: NaoRobotModel.model_id,
       _view_name: NaoRobotModel.view_name,
       _view_module: NaoRobotModel.view_module,
       _view_module_version: NaoRobotModel.view_module_version,
@@ -37,19 +36,44 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     this.on("msg:custom", this.onCommand);
 
-
-    //   let newValue : Number = 1;
-    //   this.set('counter', newValue);
-    //   this.save_changes();
-    // })
   }
 
-  // async connect() {
-  //   if (!this.qiSession.isConnected) {
-  //     console.log("RRR not connected, trying again");
-  //     this.qiSession = new QiSession();
-  //   }
-  // }
+  // TODO: it "connects" immediately
+  async connect(ipAddress: any) {
+    // const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    console.log("REMOVE the command was to connect");
+    this.qiSession = new QiSession(ipAddress);
+
+    // for (let i=0; i<30; i++) {
+    //   await sleep(100)
+    //   if (this.qiSession.connected) break;
+    //   if (i == 28) {
+    //     console.log("NOT CONNECTED YET");
+    //   }
+    // }
+  }
+
+  disconnect() {
+    console.log("REMOVE disconnecting");
+    // TODO: delete session or make disconnect function
+  }
+
+  async ALTextToSpeech(speech : String = "") {
+    const tts = await this.qiSession.service("ALTextToSpeech");
+    await tts.say(speech)
+  }
+
+  async ALLeds(tSeconds : Number = 1) {
+    const leds = await this.qiSession.service("ALLeds");
+    await leds.rasta(tSeconds);
+  }
+
+  async ALMotion() {
+    const motion = await this.qiSession.service("ALMotion");
+    await motion.wakeUp();
+    await motion.rest();
+  }
 
   private async onCommand(commandData: any, buffers: any) {
     console.log("REMOVE onCommand", commandData);
@@ -57,24 +81,34 @@ export class NaoRobotModel extends DOMWidgetModel {
     
     // TODO: change to switch case
     if (cmd === "connect") {
-      console.log("REMOVE the command was to connect");
-      this.qiSession = new QiSession();
-      let tts = await this.qiSession.service("ALTextToSpeech");
-      await tts.say("hello there there");
-      console.log("REMOVE tts after await");
-    }
+      await this.connect(commandData["ipAddress"]);
+    } else if (cmd === "disconnect") {
+      this.disconnect();
+    } else {
+      switch (cmd) {
 
-    if (cmd === "ALTextToSpeech") {
-      console.log("REMOVE command texttospeech");
-      let tts = await this.qiSession.service("ALTextToSpeech");
-      await tts.say(commandData["speech"]);
+        case "ALTextToSpeech":
+          await this.ALTextToSpeech(commandData["speech"]);
+          break;
+
+        case "ALLeds":
+          await this.ALLeds(commandData["tSeconds"]);
+          break;
+
+        case "ALMotion":
+          await this.ALMotion();
+          break;
+      };
     }
 
     // TODO: figure out async
-    // let newValue : Number = 1;
-    // this.set("counter", newValue);
-    // this.save_changes();
+    console.log("Before: ", this.get("counter"));
+    let newValue : Number = this.get("counter") + 1;
+    this.set("counter", newValue);
+    // this.set("value", newValue);
+    this.save_changes();
 
+    console.log("After: ", this.get("counter"));
     console.log("REMOVE counter set");
   }
 

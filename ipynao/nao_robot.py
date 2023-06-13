@@ -43,7 +43,7 @@ class NaoRobotWidget(DOMWidget):
     counter = Integer(0, read_only=True).tag(sync=True)
     connected = Bool(False).tag(sync=True)
 
-    def connect(self, ip_address="nao.local"):
+    async def connect(self, ip_address="nao.local"):
         self.value = "Connecting..."
         data = {}
         data["command"] = str("connect")
@@ -52,7 +52,6 @@ class NaoRobotWidget(DOMWidget):
 
         # TODO: figure out async
         # await wait_for_change(self, "counter")
-        # self.value = "after waiting for change"
         self.connected = True
         self.value = "Connected."
 
@@ -64,3 +63,14 @@ class NaoRobotWidget(DOMWidget):
             self.send(data)
         else:
             self.value = "Not connected"
+
+    def ALLeds(self, seconds):
+        data = {}
+        data["command"] = str("ALLeds")
+        data["tSeconds"] = seconds
+        self.send(data)
+
+    def ALMotion(self):
+        data = {}
+        data["command"] = str("ALMotion")
+        self.send(data)
