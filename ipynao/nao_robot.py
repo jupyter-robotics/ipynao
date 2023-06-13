@@ -39,16 +39,34 @@ class NaoRobotWidget(DOMWidget):
     _view_module = Unicode(module_name).tag(sync=True)
     _view_module_version = Unicode(module_version).tag(sync=True)
 
+    _future = None
     value = Unicode('Hello World').tag(sync=True)
     counter = Integer(0, read_only=True).tag(sync=True)
     connected = Bool(False).tag(sync=True)
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.on_msg(self._handle_frontend_msg)
+
+    def _handle_frontend_msg(self, model, msg, buffer):
+        print(msg)
+        self._future.set_result('donemmm')
+        # self.value = "After setting result"
+
     async def connect(self, ip_address="nao.local"):
         self.value = "Connecting..."
+       
         data = {}
         data["command"] = str("connect")
         data["ipAddress"] = str(ip_address)
         self.send(data)
+
+        self._future = asyncio.Future()
+
+        self.value = "Before waiting future"
+        await self._future
+        self.value = "After waiting future"
+        self._future = None
 
         # TODO: figure out async
         # await wait_for_change(self, "counter")

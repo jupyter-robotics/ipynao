@@ -45,13 +45,7 @@ export class NaoRobotModel extends DOMWidgetModel {
     console.log("REMOVE the command was to connect");
     this.qiSession = new QiSession(ipAddress);
 
-    // for (let i=0; i<30; i++) {
-    //   await sleep(100)
-    //   if (this.qiSession.connected) break;
-    //   if (i == 28) {
-    //     console.log("NOT CONNECTED YET");
-    //   }
-    // }
+    
   }
 
   disconnect() {
@@ -82,6 +76,7 @@ export class NaoRobotModel extends DOMWidgetModel {
     // TODO: change to switch case
     if (cmd === "connect") {
       await this.connect(commandData["ipAddress"]);
+      this.send({data: "done"});
     } else if (cmd === "disconnect") {
       this.disconnect();
     } else {
@@ -89,6 +84,7 @@ export class NaoRobotModel extends DOMWidgetModel {
 
         case "ALTextToSpeech":
           await this.ALTextToSpeech(commandData["speech"]);
+          this.send({data: "done"});
           break;
 
         case "ALLeds":
