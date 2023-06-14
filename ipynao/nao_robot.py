@@ -9,24 +9,25 @@ TODO: Add module docstring
 """
 
 from ipywidgets import DOMWidget
-from traitlets import Unicode, Integer, Bool
+from traitlets import Unicode
 from ._frontend import module_name, module_version
 
-import asyncio
+# TODO: figure out async
+# import asyncio
 
-def wait_for_change(widget, value):
-    """
-    Wait for a change in a widget's value.
-    """
-    future = asyncio.Future()
+# def wait_for_change(widget, value):
+#     """
+#     Wait for a change in a widget's value.
+#     """
+#     future = asyncio.Future()
 
-    def getvalue(change):
-        # make the new value available
-        future.set_result(change.new)
-        widget.unobserve(getvalue, value)
+#     def getvalue(change):
+#         # make the new value available
+#         future.set_result(change.new)
+#         widget.unobserve(getvalue, value)
 
-    widget.observe(getvalue, value)
-    return future
+#     widget.observe(getvalue, value)
+#     return future
 
 
 class NaoRobotWidget(DOMWidget):
@@ -39,21 +40,18 @@ class NaoRobotWidget(DOMWidget):
     _view_module = Unicode(module_name).tag(sync=True)
     _view_module_version = Unicode(module_version).tag(sync=True)
 
-    _future = None
     value = Unicode('Hello World').tag(sync=True)
-    counter = Integer(0, read_only=True).tag(sync=True)
-    connected = Bool(False).tag(sync=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.on_msg(self._handle_frontend_msg)
 
     def _handle_frontend_msg(self, model, msg, buffer):
+        print("Received frontend msg: ")
         print(msg)
-        self._future.set_result('donemmm')
-        # self.value = "After setting result"
+        # TODO:
 
-    async def connect(self, ip_address="nao.local"):
+    def connect(self, ip_address="nao.local"):
         self.value = "Connecting..."
        
         data = {}
@@ -61,16 +59,6 @@ class NaoRobotWidget(DOMWidget):
         data["ipAddress"] = str(ip_address)
         self.send(data)
 
-        self._future = asyncio.Future()
-
-        self.value = "Before waiting future"
-        await self._future
-        self.value = "After waiting future"
-        self._future = None
-
-        # TODO: figure out async
-        # await wait_for_change(self, "counter")
-        self.connected = True
         self.value = "Connected."
 
     def ALTextToSpeech(self, text):

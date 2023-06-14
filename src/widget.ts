@@ -27,25 +27,18 @@ export class NaoRobotModel extends DOMWidgetModel {
       _view_module: NaoRobotModel.view_module,
       _view_module_version: NaoRobotModel.view_module_version,
       value: 'Hello World',
-      counter: 0,
     };
   }
 
   initialize(attributes: any, options: any): void {
     super.initialize(attributes, options);
-
+  
     this.on("msg:custom", this.onCommand);
-
   }
 
-  // TODO: it "connects" immediately
   async connect(ipAddress: any) {
-    // const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
     console.log("REMOVE the command was to connect");
-    this.qiSession = new QiSession(ipAddress);
-
-    
+    this.qiSession = new QiSession(ipAddress);    
   }
 
   disconnect() {
@@ -73,7 +66,6 @@ export class NaoRobotModel extends DOMWidgetModel {
     console.log("REMOVE onCommand", commandData);
     const cmd = commandData["command"];
     
-    // TODO: change to switch case
     if (cmd === "connect") {
       await this.connect(commandData["ipAddress"]);
       this.send({data: "done"});
