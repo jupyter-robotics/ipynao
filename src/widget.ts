@@ -16,6 +16,7 @@ import { QiSession } from './qimessaging';
 
 export class NaoRobotModel extends DOMWidgetModel {
   qiSession: QiSession;
+  synco: number = 0;
 
   defaults() {
     return {
@@ -27,6 +28,7 @@ export class NaoRobotModel extends DOMWidgetModel {
       _view_module: NaoRobotModel.view_module,
       _view_module_version: NaoRobotModel.view_module_version,
       value: 'Hello World',
+      synco: 0,
     };
   }
 
@@ -62,9 +64,44 @@ export class NaoRobotModel extends DOMWidgetModel {
     await motion.rest();
   }
 
+  async Testing() {
+    this.qiSession = new QiSession();
+    const tts = await this.qiSession.service("ALTextToSpeech");
+    // let msg : any = Object.getOwnPropertyNames(tts);
+    let aThing: any = this.send(tts);
+    console.log("A thing: ", aThing);
+    console.log("JS sent something");
+  }
+
+  async goSleep(tSeconds : number) {
+    console.log("IN THE SLEEPING SESH")
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    await sleep(tSeconds * 1000);
+
+    console.log("WAKING UP");
+
+    this.set("synco", this.synco++);
+    this.save_changes();
+    console.log("SETTED THE SYNCO");
+
+  }
+
   private async onCommand(commandData: any, buffers: any) {
     console.log("REMOVE onCommand", commandData);
     const cmd = commandData["command"];
+
+    if (cmd === "goSleep") {
+      console.log("GOING TO SLEEP");
+      await this.goSleep(commandData["tSeconds"]);
+      console.log("AFTER BEAUTY NAP");
+    }
+
+    if (cmd === "Testing") {
+      console.log("JS about to test");
+      await this.Testing();
+      console.log("JS after await");
+    }
     
     if (cmd === "connect") {
       await this.connect(commandData["ipAddress"]);
@@ -89,15 +126,9 @@ export class NaoRobotModel extends DOMWidgetModel {
       };
     }
 
-    // TODO: figure out async
-    console.log("Before: ", this.get("counter"));
-    let newValue : Number = this.get("counter") + 1;
-    this.set("counter", newValue);
-    // this.set("value", newValue);
-    this.save_changes();
 
-    console.log("After: ", this.get("counter"));
-    console.log("REMOVE counter set");
+
+    console.log("End of OnCommand")
   }
 
   static serializers: ISerializers = {

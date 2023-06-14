@@ -9,11 +9,11 @@ TODO: Add module docstring
 """
 
 from ipywidgets import DOMWidget
-from traitlets import Unicode
+from traitlets import Unicode, Integer
 from ._frontend import module_name, module_version
 
 # TODO: figure out async
-# import asyncio
+import asyncio
 
 # def wait_for_change(widget, value):
 #     """
@@ -41,6 +41,7 @@ class NaoRobotWidget(DOMWidget):
     _view_module_version = Unicode(module_version).tag(sync=True)
 
     value = Unicode('Hello World').tag(sync=True)
+    synco = Integer(0, read_only=True).tag(sync=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -50,6 +51,38 @@ class NaoRobotWidget(DOMWidget):
         print("Received frontend msg: ")
         print(msg)
         # TODO:
+
+    def wait_for_change(self, value_name):
+        future = asyncio.Future()
+        print("CREATED A FUTURE")
+
+        def get_value_change(change):
+            print("GOT NEW VALUE")
+            future.set_result(change.new)
+            self.unobserve(get_value_change, value_name)
+
+        self.observe(get_value_change, value_name)
+
+        print("RETURNING THE FUTURE")
+        return future
+
+    async def wait_for_me(self, tSeconds=2):
+        print("STARTING TO WAIT")
+        data = {}
+        data["command"] = str("goSleep")
+        data["tSeconds"] = tSeconds
+        self.send(data)
+        print("SENT THE DATA")
+
+        return self.wait_for_change("synco")
+
+    def testing(self):
+        self.value = "Testing..."
+        data = {}
+        data["command"] = str("Testing")
+        self.send(data)
+        print("After sent")
+        self.value = "Done testing"
 
     def connect(self, ip_address="nao.local"):
         self.value = "Connecting..."
