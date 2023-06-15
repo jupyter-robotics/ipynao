@@ -16,6 +16,8 @@ import { QiSession } from './qimessaging';
 
 export class NaoRobotModel extends DOMWidgetModel {
   qiSession: QiSession;
+  connected: string = "Disconnected";
+  status: string = "Not busy";
   synco: string;
 
   defaults() {
@@ -29,6 +31,8 @@ export class NaoRobotModel extends DOMWidgetModel {
       _view_module_version: NaoRobotModel.view_module_version,
       value: 'Hello World',
       synco: "something silly",
+      connected: "Disconnected",
+      status: "Not busy",
     };
   }
 
@@ -38,14 +42,31 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.on("msg:custom", this.onCommand);
   }
 
+  private changeStatus(statusMessage: string) {
+    this.status = statusMessage;
+    this.set("status", statusMessage);
+    this.save_changes();
+  }
+
   async connect(ipAddress: any) {
     console.log("REMOVE the command was to connect");
+    this.changeStatus("Establishing connection");
+
     this.qiSession = new QiSession(ipAddress);    
+    
+    this.connected = "Connected";
+    this.set("connected", "Connected");
+    this.save_changes();
+
+    this.changeStatus("Not busy");
   }
 
   disconnect() {
     console.log("REMOVE disconnecting");
-    // TODO: delete session or make disconnect function
+    // TODO: Make disconnect function
+    // delete this.qiSession;
+    this.connected = "Disconnected";
+    this.changeStatus("Unavailable");
   }
 
   async ALTextToSpeech(speech : String = "") {
@@ -83,26 +104,55 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     this.set("synco", "something else");
     this.save_changes();
+
+    this.send({data: "purple"});
     console.log("SETTED THE VALUE");
 
+  }
+
+  private async callService(
+    serviceName: string,
+    methodName: string,
+    args: any,
+    kwargs: any
+  ) {
+    this.changeStatus("Creating service " + serviceName);
+
+    const naoService = await this.qiSession.service(serviceName);
+
+    this.changeStatus("Service created" + serviceName);
+
+    await naoService.say(args[0]);
+
+    this.changeStatus("Did Nao say anything?");
   }
 
   private async onCommand(commandData: any, buffers: any) {
     console.log("REMOVE onCommand", commandData);
     const cmd = commandData["command"];
 
-    if (cmd === "goSleep") {
-      console.log("GOING TO SLEEP");
-      await this.goSleep(commandData["tSeconds"]);
-      console.log("AFTER BEAUTY NAP");
+    switch (cmd) {
+      case "connect":
+        await this.connect(commandData["ipAddress"]);
+        break;
+
+      case "disconnect":
+        this.disconnect();
+        break;
+
+      case "callService":
+        console.log("RECEIVING COMMAND FOR SERVICE");
+        console.log(commandData);
+        await this.callService(
+          commandData["service"],
+          commandData["method"],
+          commandData["args"],
+          commandData["kwargs"]
+        );
+        break;
+      
     }
 
-    if (cmd === "Testing") {
-      console.log("JS about to test");
-      await this.Testing();
-      console.log("JS after await");
-    }
-    
     if (cmd === "connect") {
       await this.connect(commandData["ipAddress"]);
       this.send({data: "done"});
@@ -127,7 +177,6 @@ export class NaoRobotModel extends DOMWidgetModel {
     }
 
 
-
     console.log("End of OnCommand")
   }
 
@@ -148,22 +197,43 @@ export class NaoRobotModel extends DOMWidgetModel {
 export class NaoRobotView extends DOMWidgetView {
   synco: HTMLDivElement;
   txt_connected: HTMLDivElement;
+  txt_status: HTMLDivElement;
 
   render() {
     this.el.classList.add('custom-widget');
 
+    // Connection element
+    this.txt_connected = document.createElement('div');
+    this.txt_connected.textContent = "Disconnected";
+    this.el.appendChild(this.txt_connected);
+
+    // Status element
+    this.txt_status = document.createElement('div');
+    this.txt_status.textContent = "Not busy";
+    this.el.appendChild(this.txt_status);
+
     // Testing element
-    // connected
     this.synco = document.createElement('div');
-    this.synco.textContent = this.model.get('synco');
+    this.synco.textContent = "it should be here";
     this.el.appendChild(this.synco);
 
+    console.log("RENDERING");
+    console.log(this.model.get("connected"), " CONNECTED");
+    console.log(this.model.get("synco"), " SYNCO");
+
     this.value_changed();
+    this.model.on('change:connected', this.value_changed, this);
+    this.model.on('change:status', this.value_changed, this);
     this.model.on('change:synco', this.value_changed, this);
   }
 
   value_changed() {
-    this.el.textContent = this.model.get('value');
-    this.synco = this.model.get('synco');
+    // this.el.textContent = this.model.get('value');
+    // this.synco = this.model.get('synco');
+    console.log("THE VALUE CHANGED")
+    this.txt_connected.textContent = this.model.get("connected");
+    this.txt_status.textContent = this.model.get("status");
+    this.synco.textContent = this.model.get('synco');
+
   }
 }
