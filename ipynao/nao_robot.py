@@ -30,11 +30,11 @@ class NaoRobotService():
         data["command"] = "callService"
         data["service"] = str(self.name)
         data["method"]  = str(method_name)
-        data["args"]    = args
+        # convert tuple to list to avoid empty arg values
+        data["args"]    = list(args)
         data["kwargs"]  = kwargs
 
         self.widget.send(data)
-        return data
 
     def __getattr__(self, method_name):
         # TODO: some very basic input validation (maybe)
@@ -54,7 +54,7 @@ class NaoRobotWidget(DOMWidget):
     value = Unicode('Hello World').tag(sync=True)
     connected = Unicode("Disconnected").tag(sync=True)
     status = Unicode("Not busy").tag(sync=True)
-    synco = Unicode("what is this magic").tag(sync=True)
+    synco = Unicode("test message").tag(sync=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

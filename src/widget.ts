@@ -120,11 +120,11 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     const naoService = await this.qiSession.service(serviceName);
 
-    this.changeStatus("Service created" + serviceName);
+    this.changeStatus("Running method" + methodName);
 
-    await naoService.say(args[0]);
+    await naoService[methodName].apply(naoService, args);
 
-    this.changeStatus("Did Nao say anything?");
+    this.changeStatus("Task completed");
   }
 
   private async onCommand(commandData: any, buffers: any) {
@@ -142,7 +142,6 @@ export class NaoRobotModel extends DOMWidgetModel {
 
       case "callService":
         console.log("RECEIVING COMMAND FOR SERVICE");
-        console.log(commandData);
         await this.callService(
           commandData["service"],
           commandData["method"],
@@ -152,30 +151,6 @@ export class NaoRobotModel extends DOMWidgetModel {
         break;
       
     }
-
-    if (cmd === "connect") {
-      await this.connect(commandData["ipAddress"]);
-      this.send({data: "done"});
-    } else if (cmd === "disconnect") {
-      this.disconnect();
-    } else {
-      switch (cmd) {
-
-        case "ALTextToSpeech":
-          await this.ALTextToSpeech(commandData["speech"]);
-          this.send({data: "done"});
-          break;
-
-        case "ALLeds":
-          await this.ALLeds(commandData["tSeconds"]);
-          break;
-
-        case "ALMotion":
-          await this.ALMotion();
-          break;
-      };
-    }
-
 
     console.log("End of OnCommand")
   }
