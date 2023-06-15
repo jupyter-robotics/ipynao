@@ -16,7 +16,7 @@ import { QiSession } from './qimessaging';
 
 export class NaoRobotModel extends DOMWidgetModel {
   qiSession: QiSession;
-  synco: number = 0;
+  synco: string;
 
   defaults() {
     return {
@@ -28,7 +28,7 @@ export class NaoRobotModel extends DOMWidgetModel {
       _view_module: NaoRobotModel.view_module,
       _view_module_version: NaoRobotModel.view_module_version,
       value: 'Hello World',
-      synco: 0,
+      synco: "something silly",
     };
   }
 
@@ -81,9 +81,9 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     console.log("WAKING UP");
 
-    this.set("synco", this.synco++);
+    this.set("synco", "something else");
     this.save_changes();
-    console.log("SETTED THE SYNCO");
+    console.log("SETTED THE VALUE");
 
   }
 
@@ -146,14 +146,24 @@ export class NaoRobotModel extends DOMWidgetModel {
 }
 
 export class NaoRobotView extends DOMWidgetView {
+  synco: HTMLDivElement;
+  txt_connected: HTMLDivElement;
+
   render() {
     this.el.classList.add('custom-widget');
 
+    // Testing element
+    // connected
+    this.synco = document.createElement('div');
+    this.synco.textContent = this.model.get('synco');
+    this.el.appendChild(this.synco);
+
     this.value_changed();
-    this.model.on('change:value', this.value_changed, this);
+    this.model.on('change:synco', this.value_changed, this);
   }
 
   value_changed() {
     this.el.textContent = this.model.get('value');
+    this.synco = this.model.get('synco');
   }
 }

@@ -29,6 +29,25 @@ import asyncio
 #     widget.observe(getvalue, value)
 #     return future
 
+def create_service_msg(service_name, method_name, *args, **kwargs):
+    data = {}
+    data["command"] = "callService"
+    data["service"] = str(service_name)
+    data["method"]  = str(method_name)
+    data["args"]    = args
+    data["kwargs"]  = kwargs
+    return data
+
+class NaoRobotService():
+    name = None
+
+    def __init__(self, service_name):
+        self.name = service_name
+
+    def __getattr__(self, method_name):
+        # TODO: some very basic input validation (maybe)
+        return lambda *x, **y: create_service_msg(self.name, method_name, *x, **y)
+
 
 class NaoRobotWidget(DOMWidget):
     """TODO: Add docstring here
@@ -58,8 +77,8 @@ class NaoRobotWidget(DOMWidget):
 
         def get_value_change(change):
             print("GOT NEW VALUE")
-            future.set_result(change.new)
             self.unobserve(get_value_change, value_name)
+            future.set_result(change['new'])
 
         self.observe(get_value_change, value_name)
 
@@ -74,7 +93,17 @@ class NaoRobotWidget(DOMWidget):
         self.send(data)
         print("SENT THE DATA")
 
-        return self.wait_for_change("synco")
+        await self.wait_for_change("synco")
+
+        print("RETURNING THE WAIT")
+        return "something"
+    
+    async def wait_wrapper(self, tSeconds=2):
+        print("WRAPPER")
+        nap = self.wait_for_me(tSeconds)
+        await nap
+        return "doneskies"
+
 
     def testing(self):
         self.value = "Testing..."
@@ -93,6 +122,9 @@ class NaoRobotWidget(DOMWidget):
         self.send(data)
 
         self.value = "Connected."
+
+    def service(self, service_name):
+        return NaoRobotService(service_name)
 
     def ALTextToSpeech(self, text):
         if (self.connected):
