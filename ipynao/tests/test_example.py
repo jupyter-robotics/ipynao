@@ -6,9 +6,9 @@
 
 import pytest
 
-from ..example import ExampleWidget
+from ..nao_robot import NaoRobotWidget
 
 
-def test_example_creation_blank():
-    w = ExampleWidget()
+def test_nao_robot_creation_blank():
+    w = NaoRobotWidget()
     assert w.value == 'Hello World'
