@@ -15,8 +15,6 @@ from ._frontend import module_name, module_version
 import asyncio
 
 
-
-
 class NaoRobotService():
     name = None
     widget = None
@@ -67,27 +65,20 @@ class NaoRobotWidget(DOMWidget):
 
     def wait_for_change(widget, value_name):
         future = asyncio.Future()
-        print("CREATED A FUTURE")
 
         def get_value_change(change):
-            print("GOT NEW VALUE")
-            print(change["new"])
             widget.unobserve(get_value_change, names=value_name)
             future.set_result(change['new'])
 
         widget.observe(get_value_change, names=value_name)
-
-        print("RETURNING THE FUTURE")
         return future
 
 
-    async def wait_for_me(self, tSeconds=2):
-        print("STARTING TO WAIT")
+    async def go_sleep(self, tSeconds=2):
         data = {}
         data["command"] = str("goSleep")
         data["tSeconds"] = tSeconds
         self.send(data)
-        print("SENT THE DATA")
 
         return self.wait_for_change("synco")
     
@@ -101,4 +92,3 @@ class NaoRobotWidget(DOMWidget):
 
     def service(self, service_name):
         return NaoRobotService(self, service_name)
-

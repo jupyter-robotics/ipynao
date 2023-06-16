@@ -69,22 +69,6 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.changeStatus("Unavailable");
   }
 
-  async ALTextToSpeech(speech : String = "") {
-    const tts = await this.qiSession.service("ALTextToSpeech");
-    await tts.say(speech)
-  }
-
-  async ALLeds(tSeconds : Number = 1) {
-    const leds = await this.qiSession.service("ALLeds");
-    await leds.rasta(tSeconds);
-  }
-
-  async ALMotion() {
-    const motion = await this.qiSession.service("ALMotion");
-    await motion.wakeUp();
-    await motion.rest();
-  }
-
   async Testing() {
     this.qiSession = new QiSession();
     const tts = await this.qiSession.service("ALTextToSpeech");
@@ -116,13 +100,10 @@ export class NaoRobotModel extends DOMWidgetModel {
     args: any,
     kwargs: any
   ) {
-    this.changeStatus("Creating service " + serviceName);
-
     const naoService = await this.qiSession.service(serviceName);
 
     this.changeStatus("Running method" + methodName);
-
-    await naoService[methodName].apply(naoService, args);
+    await naoService[methodName](...args);
 
     this.changeStatus("Task completed");
   }
