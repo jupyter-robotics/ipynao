@@ -6,7 +6,7 @@
 **   - Laurent LEC    <llec@aldebaran-robotics.com>
 **
 */
-import { io } from "nao-socket.io";
+import io from "nao-socket.io";
 
 export class QiSession {
     connected: Boolean = false;
@@ -14,13 +14,15 @@ export class QiSession {
     host: any;
     service: any;
 
-    constructor(ipAddress: any = "nao.local") {
-        // console.log("DBG Emile qim about to connect w/17"); REMOVE
+    constructor(ipAddress: string = "nao.local", port: string = "80") {
+        console.log("DBG Emile qim about to connect w/17");
+        // @ts-ignore
+        window["oioi"] = io;
         let _socket = io.connect(
-            "nao:nao@" + ipAddress + ":80", 
+            "nao:nao@" + ipAddress + ":" + port,
             { resource: "libs/qimessaging/2/socket.io",
             'force new connection': true });
-        // console.log("DBG Emile qim connecting.."); REMOVE
+        // console.log("DBG Emile qim connecting..");
         let _dfd = new Array();
         let _sigs = new Array();
         let _idm = 0;

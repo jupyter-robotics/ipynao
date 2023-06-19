@@ -1,6 +1,6 @@
 {
   "name": "ipynao",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A widget library for controlling Nao",
   "keywords": [
     "jupyter",
@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@jupyter-widgets/base": "^1.1.10 || ^2 || ^3 || ^4 || ^5 || ^6",
-    "nao-socket.io": "^1.0.2"
+    "nao-socket.io": "1.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.5.0",

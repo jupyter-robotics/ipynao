@@ -83,10 +83,11 @@ class NaoRobotWidget(DOMWidget):
         return self.wait_for_change("synco")
     
 
-    def connect(self, ip_address="nao.local"):      
+    def connect(self, ip_address="nao.local", port="80"):      
         data = {}
         data["command"] = str("connect")
         data["ipAddress"] = str(ip_address)
+        data["port"] = str(port)
         self.send(data)
 
 
