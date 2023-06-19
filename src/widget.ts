@@ -48,11 +48,11 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.save_changes();
   }
 
-  async connect(ipAddress: any) {
+  async connect(ipAddress: string, port: string) {
     console.log("REMOVE the command was to connect");
     this.changeStatus("Establishing connection");
 
-    this.qiSession = new QiSession(ipAddress);    
+    this.qiSession = new QiSession(ipAddress, port);    
     
     this.connected = "Connected";
     this.set("connected", "Connected");
@@ -114,7 +114,9 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     switch (cmd) {
       case "connect":
-        await this.connect(commandData["ipAddress"]);
+        await this.connect(
+          commandData["ipAddress"],
+          commandData["port"]);
         break;
 
       case "disconnect":
