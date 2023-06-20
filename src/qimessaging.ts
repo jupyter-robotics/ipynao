@@ -26,7 +26,8 @@ export class QiSession {
     let _idm = 0;
 
     interface replyType {
-      __MetaObject?: any;
+      __MetaObject?: any,
+      [key: string]: any,
     }
 
 
@@ -49,19 +50,16 @@ export class QiSession {
 
         for (let i in methods) {
           let methodName = methods[i]['name'];
-          // @ts-ignore
           replyObject[methodName] = createMetaCall(pyobj, methodName, 'data');
         }
         let signals = replyObject.__MetaObject['signals'];
         for (let i in signals) {
           let signalName = signals[i]['name'];
-          // @ts-ignore
           replyObject[signalName] = createMetaSignal(pyobj, signalName, false);
         }
         let properties = replyObject.__MetaObject['properties'];
         for (let i in properties) {
           let propertyName = properties[i]['name'];
-          // @ts-ignore
           replyObject[propertyName] = createMetaSignal(pyobj, propertyName, true);
         }
         _dfd[idm].resolve(replyObject);
