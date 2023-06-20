@@ -25,51 +25,52 @@ export class QiSession {
     let _sigs = new Array();
     let _idm = 0;
 
-    interface MetaObject {
+    interface replyType {
       __MetaObject?: any;
     }
+
 
     _socket.on('reply', function (data: any) {
       console.log('DBG Emile qim reply');
       // @ts-ignore
       window['datata'] = data;
-      console.log("here's the datata");
+      console.log("here's the datata", data); // REMOVE
 
       let idm = data['idm'];
       if (data['result'] != null && data['result']['metaobject'] != undefined) {
         // let o = new Object();
-        let o: MetaObject = {
+        let replyObject: replyType = {
           __MetaObject: data['result']['metaobject'],
         };
 
         let pyobj = data['result']['pyobject'];
         _sigs[pyobj] = new Array();
-        let methods = o.__MetaObject['methods'];
+        let methods = replyObject.__MetaObject['methods'];
 
         for (let i in methods) {
           let methodName = methods[i]['name'];
           // @ts-ignore
-          o[methodName] = createMetaCall(pyobj, methodName, 'data');
+          replyObject[methodName] = createMetaCall(pyobj, methodName, 'data');
         }
-        let signals = o.__MetaObject['signals'];
+        let signals = replyObject.__MetaObject['signals'];
         for (let i in signals) {
           let signalName = signals[i]['name'];
           // @ts-ignore
-          o[signalName] = createMetaSignal(pyobj, signalName, false);
+          replyObject[signalName] = createMetaSignal(pyobj, signalName, false);
         }
-        let properties = o.__MetaObject['properties'];
+        let properties = replyObject.__MetaObject['properties'];
         for (let i in properties) {
           let propertyName = properties[i]['name'];
           // @ts-ignore
-          o[propertyName] = createMetaSignal(pyobj, propertyName, true);
+          replyObject[propertyName] = createMetaSignal(pyobj, propertyName, true);
         }
-        _dfd[idm].resolve(o);
+        _dfd[idm].resolve(replyObject);
 
-        console.log('What is this o');
+        console.log('What is this o'); // REMOVE
         // @ts-ignore
-        window['ooo'] = o;
+        window['ooo'] = replyObject; // REMOVE
         // @ts-ignore
-        window['dfd'] = _dfd;
+        window['dfd'] = _dfd; // REMOVE
       } else {
         if (_dfd[idm].__cbi != undefined) {
           let cbi = _dfd[idm].__cbi;
@@ -79,6 +80,7 @@ export class QiSession {
       }
       delete _dfd[idm];
     });
+
     _socket.on('error', function (data: any) {
       console.log('DBG Emile qim error');
       if (data['idm'] != undefined) {
@@ -86,8 +88,9 @@ export class QiSession {
         delete _dfd[data['idm']];
       }
     });
+
     _socket.on('signal', function (data: any) {
-      // console.log("DBG Emile qim signal"); REMOVE
+      console.log("DBG Emile qim signal");
       let res = data['result'];
       let callback = _sigs[res['obj']][res['signal']][res['link']];
       if (callback != undefined) {
@@ -95,8 +98,9 @@ export class QiSession {
         callback.apply(this, res['data']);
       }
     });
+
     _socket.on('disconnect', function (data: any) {
-      // console.log("DBG Emile qim disconnect"); REMOVE
+      console.log("DBG Emile qim disconnect");
       for (let idm in _dfd) {
         _dfd[idm].reject('Call ' + idm + ' canceled: disconnected');
         delete _dfd[idm];
@@ -107,6 +111,7 @@ export class QiSession {
         console.log('DBG Isabel disconnected');
       }
     });
+
     function createMetaCall(obj: any, member: any, data: any) {
       return function () {
         let idm = ++_idm;
@@ -125,17 +130,17 @@ export class QiSession {
       };
     }
 
-    interface sObject {
+    interface signalType {
       connect?: any;
       disconnect?: any;
       setValue?: any;
       value?: any;
     }
+
     function createMetaSignal(obj: any, signal: any, isProperty: any) {
-      // let s = new Object();
-      let s: sObject = {};
+      let signalObject: signalType = {};
       _sigs[obj][signal] = new Array();
-      s.connect = function (cb: any) {
+      signalObject.connect = function (cb: any) {
         return createMetaCall(obj, signal, {
           obj: obj,
           signal: signal,
@@ -145,15 +150,15 @@ export class QiSession {
       };
 
       // @ts-ignore
-      s.disconnect = function (l) {
+      signalObject.disconnect = function (l) {
         delete _sigs[obj][signal][l];
         // @ts-ignore
         return createMetaCall(obj, signal, 'data')('disconnect', l);
       };
       if (!isProperty) {
-        return s;
+        return signalObject;
       }
-      s.setValue = function () {
+      signalObject.setValue = function () {
         let args = Array.prototype.slice.call(arguments, 0);
         return createMetaCall(obj, signal, 'data').apply(
           this,
@@ -161,11 +166,11 @@ export class QiSession {
           ['setValue'].concat(args)
         );
       };
-      s.value = function () {
+      signalObject.value = function () {
         // @ts-ignore
         return createMetaCall(obj, signal, 'data')('value');
       };
-      return s;
+      return signalObject;
     }
 
     this.service = createMetaCall('ServiceDirectory', 'service', 'data');
