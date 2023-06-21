@@ -8,6 +8,18 @@
  */
 import io from 'nao-socket.io';
 
+interface replyType {
+  __MetaObject?: any;
+  [key: string]: any;
+}
+
+interface signalType {
+  connect?: any;
+  disconnect?: any;
+  setValue?: any;
+  value?: any;
+}
+
 export class QiSession {
   connected: any;
   disconnected: any;
@@ -19,10 +31,10 @@ export class QiSession {
   _socket: any;
 
   constructor(
-    ipAddress: string = 'nao.local',
-    port: string = '80',
-    connected?: any,
-    disconnected?: any
+    ipAddress = 'nao.local',
+    port = '80',
+    connected?: 'function',
+    disconnected?: 'function'
   ) {
     this.connected = connected;
     this.disconnected = disconnected;
@@ -32,30 +44,28 @@ export class QiSession {
       'force new connection': true,
     });
     console.log('DBG Emile qim connecting..');
-    let _dfd = (this._dfd = new Array());
-    let _sigs = (this._sigs = new Array());
+    this._dfd = [];
+    this._sigs = [];
     this._idm = 0;
-
-    interface replyType {
-      __MetaObject?: any;
-      [key: string]: any;
-    }
 
     this._socket.on('reply', (data: any) => {
       console.log('DBG Emile qim reply');
 
-      let idm = data['idm'];
-      if (data['result'] != null && data['result']['metaobject'] != undefined) {
-        let replyObject: replyType = {
+      const idm = data['idm'];
+      if (
+        data['result'] !== undefined &&
+        data['result']['metaobject'] !== undefined
+      ) {
+        const replyObject: replyType = {
           __MetaObject: data['result']['metaobject'],
         };
 
-        let pyobj = data['result']['pyobject'];
-        _sigs[pyobj] = new Array();
-        let methods = replyObject.__MetaObject['methods'];
+        const pyobj = data['result']['pyobject'];
+        this._sigs[pyobj] = [];
+        const methods = replyObject.__MetaObject['methods'];
 
-        for (let i in methods) {
-          let methodName = methods[i]['name'];
+        for (const i in methods) {
+          const methodName = methods[i]['name'];
           replyObject[methodName] = this.createMetaCall(
             pyobj,
             methodName,
@@ -63,9 +73,9 @@ export class QiSession {
           );
         }
 
-        let signals = replyObject.__MetaObject['signals'];
-        for (let i in signals) {
-          let signalName = signals[i]['name'];
+        const signals = replyObject.__MetaObject['signals'];
+        for (const i in signals) {
+          const signalName = signals[i]['name'];
           replyObject[signalName] = this.createMetaSignal(
             pyobj,
             signalName,
@@ -73,9 +83,9 @@ export class QiSession {
           );
         }
 
-        let properties = replyObject.__MetaObject['properties'];
-        for (let i in properties) {
-          let propertyName = properties[i]['name'];
+        const properties = replyObject.__MetaObject['properties'];
+        for (const i in properties) {
+          const propertyName = properties[i]['name'];
           replyObject[propertyName] = this.createMetaSignal(
             pyobj,
             propertyName,
@@ -83,44 +93,44 @@ export class QiSession {
           );
         }
 
-        _dfd[idm].resolve(replyObject);
+        this._dfd[idm].resolve(replyObject);
       } else {
-        if (_dfd[idm].__cbi != undefined) {
-          let cbi = _dfd[idm].__cbi;
-          _sigs[cbi['obj']][cbi['signal']][data['result']] = cbi['cb'];
+        if (this._dfd[idm].__cbi !== undefined) {
+          const cbi = this._dfd[idm].__cbi;
+          this._sigs[cbi['obj']][cbi['signal']][data['result']] = cbi['cb'];
         }
-        _dfd[idm].resolve(data['result']);
+        this._dfd[idm].resolve(data['result']);
       }
-      delete _dfd[idm];
+      delete this._dfd[idm];
     });
 
-    this._socket.on('error', function (data: any) {
+    this._socket.on('error', (data: any) => {
       console.log('DBG Emile qim error');
-      if (data['idm'] != undefined) {
-        _dfd[data['idm']].reject(data['result']);
-        delete _dfd[data['idm']];
+      if (data['idm'] !== undefined) {
+        this._dfd[data['idm']].reject(data['result']);
+        delete this._dfd[data['idm']];
       }
     });
 
     this._socket.on('signal', (data: any) => {
       console.log('DBG Emile qim signal');
-      let res = data['result'];
-      let callback = _sigs[res['obj']][res['signal']][res['link']];
-      if (callback != undefined) {
-        callback.apply(this, res['data']);
+      const result = data['result'];
+      const callback =
+        this._sigs[result['obj']][result['signal']][result['link']];
+      if (callback !== undefined) {
+        callback.apply(this, result['data']);
       }
     });
 
     this._socket.on('disconnect', (data: any) => {
       console.log('DBG Emile qim disconnect');
-      for (let idm in _dfd) {
-        _dfd[idm].reject('Call ' + idm + ' canceled: disconnected');
-        delete _dfd[idm];
+      for (const idm in this._dfd) {
+        this._dfd[idm].reject('Call ' + idm + ' canceled: disconnected');
+        delete this._dfd[idm];
       }
 
       if (this.disconnected) {
         this.disconnected();
-        console.log('DBG Isabel disconnected');
       }
     });
 
@@ -132,30 +142,31 @@ export class QiSession {
         this.connected(this);
       }
     });
+
     console.log('DBG Emile qim done with init');
   }
 
   createMetaCall(obj: any, member: any, data: any) {
     return (...serviceArgs: any[]) => {
-      let idm = ++this._idm;
-      let args = Array.prototype.slice.call(serviceArgs, 0);
-      let promise = new Promise((resolve, reject) => {
-        this._dfd[idm] = { resolve: resolve, reject: reject };
+      ++this._idm;
+
+      const promise = new Promise((resolve, reject) => {
+        this._dfd[this._idm] = { resolve: resolve, reject: reject };
       });
-      if (args[0] == 'connect') {
-        this._dfd[idm].__cbi = data;
+      if (serviceArgs[0] === 'connect') {
+        this._dfd[this._idm].__cbi = data;
       }
       this._socket.emit('call', {
-        idm: idm,
-        params: { obj: obj, member: member, args: args },
+        idm: this._idm,
+        params: { obj: obj, member: member, args: serviceArgs },
       });
       return promise;
     };
   }
 
-  createMetaSignal(obj: any, signal: any, isProperty: any) {
-    let signalObject: any = {};
-    this._sigs[obj][signal] = new Array();
+  createMetaSignal(obj: any, signal: any, isProperty: boolean) {
+    const signalObject: signalType = {};
+    this._sigs[obj][signal] = [];
     signalObject.connect = (cb: any) => {
       return this.createMetaCall(obj, signal, {
         obj: obj,
@@ -173,11 +184,10 @@ export class QiSession {
       return signalObject;
     }
 
-    signalObject.setValue = () => {
-      let args = Array.prototype.slice.call(arguments, 0);
+    signalObject.setValue = (...valueArgs: any[]) => {
       return this.createMetaCall(obj, signal, 'data').apply(
         this,
-        ['setValue'].concat(args)
+        ['setValue'].concat(valueArgs)
       );
     };
 

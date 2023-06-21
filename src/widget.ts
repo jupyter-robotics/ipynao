@@ -16,8 +16,8 @@ import { QiSession } from './qimessaging';
 
 export class NaoRobotModel extends DOMWidgetModel {
   qiSession: QiSession;
-  connected: string = "Disconnected";
-  status: string = "Not busy";
+  connected = 'Disconnected';
+  status = 'Not busy';
   synco: string;
 
   defaults() {
@@ -30,68 +30,67 @@ export class NaoRobotModel extends DOMWidgetModel {
       _view_module: NaoRobotModel.view_module,
       _view_module_version: NaoRobotModel.view_module_version,
       value: 'Hello World',
-      synco: "something silly",
-      connected: "Disconnected",
-      status: "Not busy",
+      synco: 'something silly',
+      connected: 'Disconnected',
+      status: 'Not busy',
     };
   }
 
   initialize(attributes: any, options: any): void {
     super.initialize(attributes, options);
-  
-    this.on("msg:custom", this.onCommand);
+
+    this.on('msg:custom', this.onCommand);
   }
 
   private changeStatus(statusMessage: string) {
     this.status = statusMessage;
-    this.set("status", statusMessage);
+    this.set('status', statusMessage);
     this.save_changes();
   }
 
   async connect(ipAddress: string, port: string) {
-    console.log("REMOVE the command was to connect");
-    this.changeStatus("Establishing connection");
+    console.log('REMOVE the command was to connect');
+    this.changeStatus('Establishing connection');
 
-    this.qiSession = new QiSession(ipAddress, port);    
-    
-    this.connected = "Connected";
-    this.set("connected", "Connected");
+    this.qiSession = new QiSession(ipAddress, port);
+
+    this.connected = 'Connected';
+    this.set('connected', 'Connected');
     this.save_changes();
 
-    this.changeStatus("Not busy");
+    this.changeStatus('Not busy');
   }
 
   disconnect() {
-    console.log("REMOVE disconnecting");
+    console.log('REMOVE disconnecting');
     // TODO: Make disconnect function
     // delete this.qiSession;
-    this.connected = "Disconnected";
-    this.changeStatus("Unavailable");
+    this.connected = 'Disconnected';
+    this.changeStatus('Unavailable');
   }
 
   async Testing() {
     this.qiSession = new QiSession();
-    const tts = await this.qiSession.service("ALTextToSpeech");
+    const tts = await this.qiSession.service('ALTextToSpeech');
     // let msg : any = Object.getOwnPropertyNames(tts);
-    let aThing: any = this.send(tts);
-    console.log("A thing: ", aThing);
-    console.log("JS sent something");
+    const aThing: any = this.send(tts);
+    console.log('A thing: ', aThing);
+    console.log('JS sent something');
   }
 
-  async goSleep(tSeconds : number) {
-    console.log("IN THE SLEEPING SESH")
+  async goSleep(tSeconds: number) {
+    console.log('IN THE SLEEPING SESH');
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
     await sleep(tSeconds * 1000);
 
-    console.log("WAKING UP");
+    console.log('WAKING UP');
 
-    this.set("synco", "something else");
+    this.set('synco', 'something else');
     this.save_changes();
 
-    this.send({data: "purple"});
-    console.log("SETTED THE VALUE");
-
+    this.send({ data: 'purple' });
+    console.log('SETTED THE VALUE');
   }
 
   private async callService(
@@ -102,40 +101,37 @@ export class NaoRobotModel extends DOMWidgetModel {
   ) {
     const naoService = await this.qiSession.service(serviceName);
 
-    this.changeStatus("Running method" + methodName);
+    this.changeStatus('Running method' + methodName);
     await naoService[methodName](...args);
 
-    this.changeStatus("Task completed");
+    this.changeStatus('Task completed');
   }
 
   private async onCommand(commandData: any, buffers: any) {
-    console.log("REMOVE onCommand", commandData);
-    const cmd = commandData["command"];
+    console.log('REMOVE onCommand', commandData);
+    const cmd = commandData['command'];
 
     switch (cmd) {
-      case "connect":
-        await this.connect(
-          commandData["ipAddress"],
-          commandData["port"]);
+      case 'connect':
+        await this.connect(commandData['ipAddress'], commandData['port']);
         break;
 
-      case "disconnect":
+      case 'disconnect':
         this.disconnect();
         break;
 
-      case "callService":
-        console.log("RECEIVING COMMAND FOR SERVICE");
+      case 'callService':
+        console.log('RECEIVING COMMAND FOR SERVICE');
         await this.callService(
-          commandData["service"],
-          commandData["method"],
-          commandData["args"],
-          commandData["kwargs"]
+          commandData['service'],
+          commandData['method'],
+          commandData['args'],
+          commandData['kwargs']
         );
         break;
-      
     }
 
-    console.log("End of OnCommand")
+    console.log('End of OnCommand');
   }
 
   static serializers: ISerializers = {
@@ -162,22 +158,22 @@ export class NaoRobotView extends DOMWidgetView {
 
     // Connection element
     this.txt_connected = document.createElement('div');
-    this.txt_connected.textContent = "Disconnected";
+    this.txt_connected.textContent = 'Disconnected';
     this.el.appendChild(this.txt_connected);
 
     // Status element
     this.txt_status = document.createElement('div');
-    this.txt_status.textContent = "Not busy";
+    this.txt_status.textContent = 'Not busy';
     this.el.appendChild(this.txt_status);
 
     // Testing element
     this.synco = document.createElement('div');
-    this.synco.textContent = "it should be here";
+    this.synco.textContent = 'it should be here';
     this.el.appendChild(this.synco);
 
-    console.log("RENDERING");
-    console.log(this.model.get("connected"), " CONNECTED");
-    console.log(this.model.get("synco"), " SYNCO");
+    console.log('RENDERING');
+    console.log(this.model.get('connected'), ' CONNECTED');
+    console.log(this.model.get('synco'), ' SYNCO');
 
     this.value_changed();
     this.model.on('change:connected', this.value_changed, this);
@@ -188,10 +184,9 @@ export class NaoRobotView extends DOMWidgetView {
   value_changed() {
     // this.el.textContent = this.model.get('value');
     // this.synco = this.model.get('synco');
-    console.log("THE VALUE CHANGED")
-    this.txt_connected.textContent = this.model.get("connected");
-    this.txt_status.textContent = this.model.get("status");
+    console.log('THE VALUE CHANGED');
+    this.txt_connected.textContent = this.model.get('connected');
+    this.txt_status.textContent = this.model.get('status');
     this.synco.textContent = this.model.get('synco');
-
   }
 }
