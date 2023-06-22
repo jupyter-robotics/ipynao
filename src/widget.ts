@@ -48,18 +48,29 @@ export class NaoRobotModel extends DOMWidgetModel {
   }
 
   async connect(ipAddress: string, port: string) {
-    console.log('REMOVE the command was to connect');
-    this.changeStatus('Establishing connection');
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+    this.changeStatus('Establishing connection');
+    // TODO: check ipAddress is valid format
     this.qiSession = new QiSession(ipAddress, port);
 
-    console.log('CONNECTED: ', this.qiSession.isConnected());
+    // Timeout after ~10 seconds
+    for (let i = 0; i < 100; i++) {
+      await sleep(100);
+      if (this.qiSession.isConnected()) {
+        this.connected = 'Connected';
+        this.set('connected', 'Connected');
+        this.save_changes();
+        this.changeStatus('Available');
+        console.log("Connection successful after ", i/10.0, " seconds.");
+        break;
+      }
+    }
 
-    this.connected = 'Connected';
-    this.set('connected', 'Connected');
-    this.save_changes();
-
-    this.changeStatus('Not busy');
+    // Handle connection failure
+    if (!this.qiSession.isConnected()) {
+      this.changeStatus('Unavailable');
+    }    
   }
 
   disconnect() {
@@ -98,7 +109,7 @@ export class NaoRobotModel extends DOMWidgetModel {
     serviceName: string,
     methodName: string,
     args: any,
-    kwargs: any
+    _kwargs: any
   ) {
     const naoService = await this.qiSession.service(serviceName);
 
