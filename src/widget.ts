@@ -69,6 +69,7 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     // Handle connection failure
     if (!this.qiSession.isConnected()) {
+      console.error("Connection to ", ipAddress, " could not be established.");
       this.changeStatus('Unavailable');
     }    
   }
