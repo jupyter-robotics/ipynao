@@ -38,14 +38,14 @@ export class QiSession {
   ) {
     this.connected = connected;
     this.disconnected = disconnected;
-    console.log('REMOVE: isConnected ', this.isConnected());
+
     console.log('DBG Emile qim about to connect w/17');
     this._socket = io.connect('nao:nao@' + ipAddress + ':' + port, {
       resource: 'libs/qimessaging/2/socket.io',
       'force new connection': true,
     });
-    console.log('REMOVE: isConnected ', this.isConnected(), this._socket.socket);
     console.log('DBG Emile qim connecting..');
+
     this._dfd = [];
     this._sigs = [];
     this._idm = 0;
@@ -62,7 +62,6 @@ export class QiSession {
 
     this.service = this.createMetaCall('ServiceDirectory', 'service', 'data');
 
-    console.log('REMOVE: isConnected ', this.isConnected(), this._socket.socket);
     console.log('DBG Emile qim done with init');
   }
 
@@ -152,11 +151,6 @@ export class QiSession {
     if (this.connected) {
       this.connected(this);
     }
-    const connected : boolean = 
-        (this._socket !== undefined) ?
-        this._socket.socket.connected : false;
-    console.log('REMOVE: isConnected in on connect ', connected);
-
   }
 
   onDisconnect(_data: any) {
@@ -180,7 +174,6 @@ export class QiSession {
       });
       if (serviceArgs[0] === 'connect') {
         this.isConnected = this._socket.socket.connected;
-        console.log('REMOVE: isConnected in MetaCall ', this.isConnected(), this._socket);
         this._dfd[this._idm].__cbi = data;
       }
       this._socket.emit('call', {

@@ -47,11 +47,27 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.save_changes();
   }
 
+  private validateIPaddress(ipAddress: string) {
+    // TODO: validate port also
+    if (ipAddress == 'nao.local') {
+      return true;
+    } else {
+      const regexp = new RegExp('^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$');
+      return regexp.test(ipAddress);
+    }
+  }
+
   async connect(ipAddress: string, port: string) {
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
     this.changeStatus('Establishing connection');
-    // TODO: check ipAddress is valid format
+
+    if (!this.validateIPaddress(ipAddress)) {
+      this.changeStatus('Invalid IP address');
+      console.warn('IP Address ', ipAddress, ' is not valid');
+      return;
+    }
+
     this.qiSession = new QiSession(ipAddress, port);
 
     // Timeout after ~10 seconds
