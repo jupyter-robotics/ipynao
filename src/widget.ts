@@ -38,7 +38,6 @@ export class NaoRobotModel extends DOMWidgetModel {
 
   initialize(attributes: any, options: any): void {
     super.initialize(attributes, options);
-
     this.on('msg:custom', this.onCommand);
   }
 
@@ -53,6 +52,8 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.changeStatus('Establishing connection');
 
     this.qiSession = new QiSession(ipAddress, port);
+
+    console.log('CONNECTED: ', this.qiSession.isConnected());
 
     this.connected = 'Connected';
     this.set('connected', 'Connected');

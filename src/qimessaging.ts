@@ -38,112 +38,137 @@ export class QiSession {
   ) {
     this.connected = connected;
     this.disconnected = disconnected;
+    console.log('REMOVE: isConnected ', this.isConnected());
     console.log('DBG Emile qim about to connect w/17');
     this._socket = io.connect('nao:nao@' + ipAddress + ':' + port, {
       resource: 'libs/qimessaging/2/socket.io',
       'force new connection': true,
     });
+    console.log('REMOVE: isConnected ', this.isConnected(), this._socket.socket);
     console.log('DBG Emile qim connecting..');
     this._dfd = [];
     this._sigs = [];
     this._idm = 0;
 
-    this._socket.on('reply', (data: any) => {
-      console.log('DBG Emile qim reply');
+    this._socket.on('reply', (data: any) => {this.onReply(data)});
 
-      const idm = data['idm'];
-      if (
-        data['result'] !== undefined &&
-        data['result']['metaobject'] !== undefined
-      ) {
-        const replyObject: replyType = {
-          __MetaObject: data['result']['metaobject'],
-        };
+    this._socket.on('error', (data: any) => {this.onError(data)});
 
-        const pyobj = data['result']['pyobject'];
-        this._sigs[pyobj] = [];
-        const methods = replyObject.__MetaObject['methods'];
+    this._socket.on('signal', (data: any) => {this.onSignal(data)});
 
-        for (const i in methods) {
-          const methodName = methods[i]['name'];
-          replyObject[methodName] = this.createMetaCall(
-            pyobj,
-            methodName,
-            'data'
-          );
-        }
+    this._socket.on('disconnect', this.onDisconnect);
 
-        const signals = replyObject.__MetaObject['signals'];
-        for (const i in signals) {
-          const signalName = signals[i]['name'];
-          replyObject[signalName] = this.createMetaSignal(
-            pyobj,
-            signalName,
-            false
-          );
-        }
-
-        const properties = replyObject.__MetaObject['properties'];
-        for (const i in properties) {
-          const propertyName = properties[i]['name'];
-          replyObject[propertyName] = this.createMetaSignal(
-            pyobj,
-            propertyName,
-            true
-          );
-        }
-
-        this._dfd[idm].resolve(replyObject);
-      } else {
-        if (this._dfd[idm].__cbi !== undefined) {
-          const cbi = this._dfd[idm].__cbi;
-          this._sigs[cbi['obj']][cbi['signal']][data['result']] = cbi['cb'];
-        }
-        this._dfd[idm].resolve(data['result']);
-      }
-      delete this._dfd[idm];
-    });
-
-    this._socket.on('error', (data: any) => {
-      console.log('DBG Emile qim error');
-      if (data['idm'] !== undefined) {
-        this._dfd[data['idm']].reject(data['result']);
-        delete this._dfd[data['idm']];
-      }
-    });
-
-    this._socket.on('signal', (data: any) => {
-      console.log('DBG Emile qim signal');
-      const result = data['result'];
-      const callback =
-        this._sigs[result['obj']][result['signal']][result['link']];
-      if (callback !== undefined) {
-        callback.apply(this, result['data']);
-      }
-    });
-
-    this._socket.on('disconnect', (data: any) => {
-      console.log('DBG Emile qim disconnect');
-      for (const idm in this._dfd) {
-        this._dfd[idm].reject('Call ' + idm + ' canceled: disconnected');
-        delete this._dfd[idm];
-      }
-
-      if (this.disconnected) {
-        this.disconnected();
-      }
-    });
+    this._socket.on('connect', this.onConnect);
 
     this.service = this.createMetaCall('ServiceDirectory', 'service', 'data');
 
-    this._socket.on('connect', () => {
-      console.log('DBG Emile qim connect');
-      if (this.connected) {
-        this.connected(this);
-      }
-    });
-
+    console.log('REMOVE: isConnected ', this.isConnected(), this._socket.socket);
     console.log('DBG Emile qim done with init');
+  }
+
+  isConnected () {
+    const connected : boolean = 
+        (this._socket !== undefined) ?
+        this._socket.socket.connected : false;
+    return connected;
+  }
+  
+  onReply(data: any) {
+    console.log('DBG Emile qim reply');
+
+    const idm = data['idm'];
+    if (
+      data['result'] !== undefined &&
+      data['result']['metaobject'] !== undefined
+    ) {
+      const replyObject: replyType = {
+        __MetaObject: data['result']['metaobject'],
+      };
+
+      const pyIndex = data['result']['pyobject'];
+      this._sigs[pyIndex] = [];
+      const methods = replyObject.__MetaObject['methods'];
+
+      for (const i in methods) {
+        const methodName = methods[i]['name'];
+        replyObject[methodName] = this.createMetaCall(
+          pyIndex,
+          methodName,
+          'data'
+        );
+      }
+
+      const signals = replyObject.__MetaObject['signals'];
+      for (const i in signals) {
+        const signalName = signals[i]['name'];
+        replyObject[signalName] = this.createMetaSignal(
+          pyIndex,
+          signalName,
+          false
+        );
+      }
+
+      const properties = replyObject.__MetaObject['properties'];
+      for (const i in properties) {
+        const propertyName = properties[i]['name'];
+        replyObject[propertyName] = this.createMetaSignal(
+          pyIndex,
+          propertyName,
+          true
+        );
+      }
+
+      this._dfd[idm].resolve(replyObject);
+    } else {
+      if (this._dfd[idm].__cbi !== undefined) {
+        const cbi = this._dfd[idm].__cbi;
+        this._sigs[cbi['obj']][cbi['signal']][data['result']] = cbi['cb'];
+      }
+      this._dfd[idm].resolve(data['result']);
+    }
+    delete this._dfd[idm];
+  }
+
+  onError(data: any) {
+    console.log('DBG Emile qim error');
+    if (data['idm'] !== undefined) {
+      this._dfd[data['idm']].reject(data['result']);
+      delete this._dfd[data['idm']];
+    }
+  }
+
+  onSignal(data: any) {
+    console.log('DBG Emile qim signal');
+    const result = data['result'];
+    const callback =
+      this._sigs[result['obj']][result['signal']][result['link']];
+    if (callback !== undefined) {
+      callback.apply(this, result['data']);
+    }
+  }
+
+  onConnect() {
+    console.log('DBG Emile qim connect');
+    if (this.connected) {
+      this.connected(this);
+    }
+    const connected : boolean = 
+        (this._socket !== undefined) ?
+        this._socket.socket.connected : false;
+    console.log('REMOVE: isConnected in on connect ', connected);
+
+  }
+
+  onDisconnect(_data: any) {
+    console.log('DBG Emile qim disconnect');
+    for (const idm in this._dfd) {
+      this._dfd[idm].reject('Call ' + idm + ' canceled: disconnected');
+      delete this._dfd[idm];
+    }
+
+    if (this.disconnected) {
+      this.disconnected();
+    }
   }
 
   createMetaCall(obj: any, member: any, data: any) {
@@ -154,6 +179,8 @@ export class QiSession {
         this._dfd[this._idm] = { resolve: resolve, reject: reject };
       });
       if (serviceArgs[0] === 'connect') {
+        this.isConnected = this._socket.socket.connected;
+        console.log('REMOVE: isConnected in MetaCall ', this.isConnected(), this._socket);
         this._dfd[this._idm].__cbi = data;
       }
       this._socket.emit('call', {
@@ -197,4 +224,5 @@ export class QiSession {
 
     return signalObject;
   }
+
 }
