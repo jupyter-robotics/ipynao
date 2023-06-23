@@ -92,4 +92,8 @@ class NaoRobotWidget(DOMWidget):
 
 
     def service(self, service_name):
+        data = {}
+        data["command"] = str("createService")
+        data["service"] = str(service_name)
+        self.send(data)
         return NaoRobotService(self, service_name)

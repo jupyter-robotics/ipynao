@@ -14,10 +14,17 @@ import '../css/widget.css';
 
 import { QiSession } from './qimessaging';
 
+interface serviceDict {
+  [key: string]: {
+    [key: string]: any;
+  };
+}
+
 export class NaoRobotModel extends DOMWidgetModel {
   qiSession: QiSession;
   connected = 'Disconnected';
   status = 'Not busy';
+  _services: serviceDict = {};
   synco: string;
 
   defaults() {
@@ -107,19 +114,28 @@ export class NaoRobotModel extends DOMWidgetModel {
     console.log('JS sent something');
   }
 
-  async goSleep(tSeconds: number) {
-    console.log('IN THE SLEEPING SESH');
-    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  private async createService(
+    serviceName: string,
+  ) {
+    this.changeStatus('Creating service ' + serviceName);
+    const servicePromise = this.qiSession.service(serviceName);
 
-    await sleep(tSeconds * 1000);
+    const naoService = await servicePromise.then(
+      (resolution: object) => {
+        return resolution;
+      }
+    ).catch(
+      (rejection: string) => {
+        this.changeStatus(rejection);
+        return rejection;
+      }
+    );
 
-    console.log('WAKING UP');
-
-    this.set('synco', 'something else');
-    this.save_changes();
-
-    this.send({ data: 'purple' });
-    console.log('SETTED THE VALUE');
+    // Store service only when successfully created
+    if (typeof(naoService) === 'object') {
+      this._services[serviceName] = naoService;
+      this.changeStatus(serviceName + ' available');
+    }
   }
 
   private async callService(
@@ -128,12 +144,24 @@ export class NaoRobotModel extends DOMWidgetModel {
     args: any,
     _kwargs: any
   ) {
-    const naoService = await this.qiSession.service(serviceName);
+    if (this._services[serviceName][methodName] === undefined) {
+      this.changeStatus(methodName + ' does not exist for ' + serviceName);
+      return;
+    }
 
-    this.changeStatus('Running method' + methodName);
-    await naoService[methodName](...args);
+    this.changeStatus('Running method ' + methodName);
 
-    this.changeStatus('Task completed');
+    const servicePromise = this._services[serviceName][methodName](...args);
+    await servicePromise.then(
+      () => {
+        this.changeStatus('Task completed');
+      }
+    ).catch(
+      (rejection: string) => {
+        this.changeStatus(rejection);
+      }
+    );
+
   }
 
   private async onCommand(commandData: any, buffers: any) {
@@ -147,6 +175,10 @@ export class NaoRobotModel extends DOMWidgetModel {
 
       case 'disconnect':
         this.disconnect();
+        break;
+
+      case 'createService':
+        this.createService(commandData['service']);
         break;
 
       case 'callService':
