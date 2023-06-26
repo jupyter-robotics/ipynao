@@ -11,8 +11,9 @@ TODO: Add module docstring
 from ipywidgets import DOMWidget
 from traitlets import Unicode, Bool
 from ._frontend import module_name, module_version
-
+from time import sleep
 import asyncio
+
 
 
 class NaoRobotService():
@@ -24,6 +25,7 @@ class NaoRobotService():
         self.widget = widget
 
     def create_service_msg(self, method_name, *args, **kwargs):
+        self.widget._response = None
         data = {}
         data["command"] = "callService"
         data["service"] = str(self.name)
@@ -35,7 +37,6 @@ class NaoRobotService():
         self.widget.send(data)
 
     def __getattr__(self, method_name):
-        # TODO: some very basic input validation (maybe)
         return lambda *x, **y: self.create_service_msg(method_name, *x, **y)
 
 
@@ -49,6 +50,7 @@ class NaoRobotWidget(DOMWidget):
     _view_module = Unicode(module_name).tag(sync=True)
     _view_module_version = Unicode(module_version).tag(sync=True)
 
+    _response = None
     value = Unicode('Hello World').tag(sync=True)
     connected = Unicode("Disconnected").tag(sync=True)
     status = Unicode("Not busy").tag(sync=True)
@@ -57,11 +59,16 @@ class NaoRobotWidget(DOMWidget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.on_msg(self._handle_frontend_msg)
+        self.observe(self._handle_value_change, names="status")
 
     def _handle_frontend_msg(self, model, msg, buffer):
         print("Received frontend msg: ")
         print(msg)
-        # TODO:
+        self._response = msg
+
+    def _handle_value_change(self, change):
+        print("HANDLE HANDLE HANDLE", change)
+        self.status = change['new']
 
     def wait_for_change(widget, value_name):
         future = asyncio.Future()
@@ -72,6 +79,19 @@ class NaoRobotWidget(DOMWidget):
 
         widget.observe(get_value_change, names=value_name)
         return future
+    
+    async def set_after(self, future, delay, value):
+        self._response = None
+        
+        for i in range(15):
+            print(i, " Sleep a blink ... ", self.status)
+            await asyncio.sleep(delay)
+            print("fjdlkjf")
+            if i == 10:
+                print("setting the future")
+                future.set_result(self._response)
+        
+        self._response = None
 
 
     async def go_sleep(self, tSeconds=2):
@@ -80,7 +100,13 @@ class NaoRobotWidget(DOMWidget):
         data["tSeconds"] = tSeconds
         self.send(data)
 
-        return self.wait_for_change("synco")
+        loop = asyncio.get_running_loop()
+        future = loop.create_future()
+        
+        print("hello ...")
+        loop.create_task(self.set_after(future, 0.1, '... world'))
+
+        return future
     
 
     def connect(self, ip_address="nao.local", port="80"):      

@@ -105,14 +105,6 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.changeStatus('Unavailable');
   }
 
-  async Testing() {
-    this.qiSession = new QiSession();
-    const tts = await this.qiSession.service('ALTextToSpeech');
-    // let msg : any = Object.getOwnPropertyNames(tts);
-    const aThing: any = this.send(tts);
-    console.log('A thing: ', aThing);
-    console.log('JS sent something');
-  }
 
   private async createService(
     serviceName: string,
@@ -149,12 +141,14 @@ export class NaoRobotModel extends DOMWidgetModel {
       return;
     }
 
+    let serviceResponse;
     this.changeStatus('Running method ' + methodName);
 
     const servicePromise = this._services[serviceName][methodName](...args);
-    await servicePromise.then(
-      () => {
+    serviceResponse = await servicePromise.then(
+      (resolution: any) => {
         this.changeStatus('Task completed');
+        return resolution;
       }
     ).catch(
       (rejection: string) => {
@@ -162,11 +156,43 @@ export class NaoRobotModel extends DOMWidgetModel {
       }
     );
 
+    console.log("OOO received response ", serviceResponse);
+    if (serviceResponse !== undefined) {
+      this.send(serviceResponse);
+    }
+  }
+
+  async goSleep() {
+    this.changeStatus("Going to sleep.");
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    await sleep(1000);
+    this.changeStatus("Slept for a second");
+    this.set('synco', '1 second');
+    this.save_changes();
+    this.send('its been a second');
+
+    await sleep(1000);
+    this.changeStatus("Slept for 2 seconds");
+    this.set('synco', '2 seconds');
+    this.save_changes();
+    this.send('its been 2 whole seconds');
+
+    await sleep(1000);
+    this.changeStatus("All awake now");
+    this.set('synco', '3 seconds');
+    this.save_changes();
+    this.send('its been too long');
   }
 
   private async onCommand(commandData: any, buffers: any) {
     console.log('REMOVE onCommand', commandData);
     const cmd = commandData['command'];
+    
+    if (cmd === "goSleep") {
+      await this.goSleep();
+      return;
+    }
 
     switch (cmd) {
       case 'connect':
@@ -200,7 +226,6 @@ export class NaoRobotModel extends DOMWidgetModel {
     // Add any extra serializers here
   };
 
-  // var qiSession = // TODO:
   static model_name = 'NaoRobotModel';
   static model_module = MODULE_NAME;
   static model_module_version = MODULE_VERSION;
@@ -231,10 +256,6 @@ export class NaoRobotView extends DOMWidgetView {
     this.synco = document.createElement('div');
     this.synco.textContent = 'it should be here';
     this.el.appendChild(this.synco);
-
-    console.log('RENDERING');
-    console.log(this.model.get('connected'), ' CONNECTED');
-    console.log(this.model.get('synco'), ' SYNCO');
 
     this.value_changed();
     this.model.on('change:connected', this.value_changed, this);
