@@ -19,12 +19,14 @@ import asyncio
 class NaoRobotService():
     name = None
     widget = None
+    output = None
 
-    def __init__(self, widget, service_name):
+    def __init__(self, widget, output, service_name):
         self.name = service_name
         self.widget = widget
+        self.output = output
 
-    def create_service_msg(self, method_name, *args, **kwargs):
+    async def create_service_msg(self, method_name, *args, **kwargs):
         self.widget._response = None
         data = {}
         data["command"] = "callService"
@@ -35,6 +37,14 @@ class NaoRobotService():
         data["kwargs"]  = kwargs
 
         self.widget.send(data)
+
+        try:
+            self.output.append_stdout("Trying this thing\n")
+            await self.widget.wait_for_change('counter')
+            self.output.append_stdout("done waiting\n")
+        except Exception as e:
+            print('Something wrong: ', e)
+            self.output.append_stdout("wrong wrong: " + str(e) + '\n')
 
     def __getattr__(self, method_name):
         return lambda *x, **y: self.create_service_msg(method_name, *x, **y)
@@ -123,9 +133,9 @@ class NaoRobotWidget(DOMWidget):
         self.send(data)
 
 
-    def service(self, service_name):
+    def service(self, output, service_name):
         data = {}
         data["command"] = str("createService")
         data["service"] = str(service_name)
         self.send(data)
-        return NaoRobotService(self, service_name)
+        return NaoRobotService(self, output, service_name)

@@ -150,6 +150,7 @@ export class NaoRobotModel extends DOMWidgetModel {
     serviceResponse = await servicePromise.then(
       (resolution: any) => {
         this.changeStatus('Task completed');
+        this.set('counter', this.get('counter') + 1);
         return resolution;
       }
     ).catch(
@@ -158,10 +159,14 @@ export class NaoRobotModel extends DOMWidgetModel {
       }
     );
 
-    console.log("OOO received response ", serviceResponse);
+    
     if (serviceResponse !== undefined) {
-      this.send(serviceResponse);
+      console.log("OOO received response ", serviceResponse);
+      // this.send(serviceResponse);
+      this.set('status', serviceResponse.toString());
     }
+
+    this.save_changes();
   }
 
   async goSleep() {
