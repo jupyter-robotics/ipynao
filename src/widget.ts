@@ -40,6 +40,8 @@ export class NaoRobotModel extends DOMWidgetModel {
       synco: 'something silly',
       connected: 'Disconnected',
       status: 'Not busy',
+      response: '',
+      counter: 0,
     };
   }
 
@@ -166,23 +168,22 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.changeStatus("Going to sleep.");
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-    await sleep(1000);
+    const motion = await this.qiSession.service("ALMotion");
+    let joints;
+    joints = await motion.getRobotConfig();
+    console.log('JOINTS: ', joints);
+    this.set('status', joints.toString());
+  
+
+    await sleep(3000);
+    this.set('counter', this.get('counter') + 1);
+
+   
     this.changeStatus("Slept for a second");
-    this.set('synco', '1 second');
+    this.set('status', 'RES: 1 second');
     this.save_changes();
-    this.send('its been a second');
+    // this.send('JS: first message');
 
-    await sleep(1000);
-    this.changeStatus("Slept for 2 seconds");
-    this.set('synco', '2 seconds');
-    this.save_changes();
-    this.send('its been 2 whole seconds');
-
-    await sleep(1000);
-    this.changeStatus("All awake now");
-    this.set('synco', '3 seconds');
-    this.save_changes();
-    this.send('its been too long');
   }
 
   private async onCommand(commandData: any, buffers: any) {
