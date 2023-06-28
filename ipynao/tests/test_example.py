@@ -11,4 +11,4 @@ from ..nao_robot import NaoRobotWidget
 
 def test_nao_robot_creation_blank():
     w = NaoRobotWidget()
-    assert w.value == 'Hello World'
+    assert w.connected == 'Disconnected'
