@@ -25,7 +25,20 @@ class NaoRobotService():
         self.name = service_name
         self.widget = widget
 
-    async def create_service_msg(self, method_name, *args, **kwargs):
+    
+    def create_service_msg(self, method_name, *args, **kwargs):
+        data = {}
+        data["command"] = "callService"
+        data["service"] = str(self.name)
+        data["method"]  = str(method_name)
+        # convert tuple to list to avoid empty arg values
+        data["args"]    = list(args)
+        data["kwargs"]  = kwargs
+
+        self.widget.send(data)
+
+    # TODO: combine msg creating into separate function
+    async def async_create_service_msg(self, method_name, *args, **kwargs):
         data = {}
         data["command"] = "callService"
         data["service"] = str(self.name)
@@ -40,11 +53,15 @@ class NaoRobotService():
             await self.widget.wait_for_change('counter')
         except Exception as e:
             return e
-
         return self.widget.response
+        
 
     def __getattr__(self, method_name):
-        return lambda *x, **y: self.create_service_msg(method_name, *x, **y)
+        # TODO: add error for when service is not ready
+        if (method_name[:6] == "async_"):
+            return lambda *x, **y: self.async_create_service_msg(method_name[6:], *x, **y)
+        else:
+            return lambda *x, **y: self.create_service_msg(method_name, *x, **y)
 
 
 class NaoRobotWidget(DOMWidget):
