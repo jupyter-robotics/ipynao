@@ -39,12 +39,11 @@ class NaoRobotService():
         self.widget.send(data)
 
         try:
-            self.output.append_stdout("Trying this thing\n")
             await self.widget.wait_for_change('counter')
-            self.output.append_stdout("done waiting\n")
         except Exception as e:
-            print('Something wrong: ', e)
             self.output.append_stdout("wrong wrong: " + str(e) + '\n')
+
+        return self.widget.js_response
 
     def __getattr__(self, method_name):
         return lambda *x, **y: self.create_service_msg(method_name, *x, **y)
@@ -66,6 +65,7 @@ class NaoRobotWidget(DOMWidget):
     synco = Unicode("test message").tag(sync=True)
     response = Unicode("").tag(sync=True)
     counter = Integer(0).tag(sync=True)
+    js_response = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -74,7 +74,7 @@ class NaoRobotWidget(DOMWidget):
 
     def _handle_frontend_msg(self, model, msg, buffer):
         print("Received frontend msg: ", msg)
-        # self.response = msg
+        self.js_response = msg
 
     def _handle_value_change(self, change):
         print("HANDLE HANDLE HANDLE", change)
@@ -85,7 +85,8 @@ class NaoRobotWidget(DOMWidget):
 
         def get_value_change(change):
             widget.unobserve(get_value_change, names=value_name)
-            future.set_result(change['new'])
+            # future.set_result(change['new'])
+            future.set_result(widget.js_response)
 
         widget.observe(get_value_change, names=value_name)
         return future

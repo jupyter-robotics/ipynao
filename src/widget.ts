@@ -162,7 +162,7 @@ export class NaoRobotModel extends DOMWidgetModel {
     
     if (serviceResponse !== undefined) {
       console.log("OOO received response ", serviceResponse);
-      // this.send(serviceResponse);
+      this.send(serviceResponse);
       this.set('status', serviceResponse.toString());
     }
 
