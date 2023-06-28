@@ -167,37 +167,9 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.save_changes();
   }
 
-  async goSleep() {
-    this.changeStatus("Going to sleep.");
-    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-    const motion = await this.qiSession.service("ALMotion");
-    let joints;
-    joints = await motion.getRobotConfig();
-    console.log('JOINTS: ', joints);
-    this.set('status', joints.toString());
-  
-
-    await sleep(3000);
-    this.set('counter', this.get('counter') + 1);
-
-   
-    this.changeStatus("Slept for a second");
-    this.set('status', 'RES: 1 second');
-    this.save_changes();
-    // this.send('JS: first message');
-
-  }
-
   private async onCommand(commandData: any, buffers: any) {
-    console.log('REMOVE onCommand', commandData);
     const cmd = commandData['command'];
     
-    if (cmd === "goSleep") {
-      await this.goSleep();
-      return;
-    }
-
     switch (cmd) {
       case 'connect':
         await this.connect(commandData['ipAddress'], commandData['port']);
@@ -212,7 +184,6 @@ export class NaoRobotModel extends DOMWidgetModel {
         break;
 
       case 'callService':
-        console.log('RECEIVING COMMAND FOR SERVICE');
         await this.callService(
           commandData['service'],
           commandData['method'],
@@ -222,7 +193,6 @@ export class NaoRobotModel extends DOMWidgetModel {
         break;
     }
 
-    console.log('End of OnCommand');
   }
 
   static serializers: ISerializers = {

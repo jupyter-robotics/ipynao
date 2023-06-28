@@ -63,67 +63,30 @@ class NaoRobotWidget(DOMWidget):
     connected = Unicode("Disconnected").tag(sync=True)
     status = Unicode("Not busy").tag(sync=True)
     response = Unicode("").tag(sync=True)
-    counter = Integer(0).tag(sync=True, read_only=True)
+    counter = Integer(0).tag(sync=True)
     js_response = None
+
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.on_msg(self._handle_frontend_msg)
-        # self.observe(self._handle_value_change, names="status")
+
 
     def _handle_frontend_msg(self, model, msg, buffer):
         print("Received frontend msg: ", msg)
         self.js_response = msg
 
-    def _handle_value_change(self, change):
-        print("HANDLE HANDLE HANDLE", change)
-        self.response = change['new']
 
     def wait_for_change(widget, value_name):
         future = asyncio.Future()
 
         def get_value_change(change):
             widget.unobserve(get_value_change, names=value_name)
-            # future.set_result(change['new'])
             future.set_result(widget.js_response)
 
         widget.observe(get_value_change, names=value_name)
-        return future
-    
-    async def set_after(self, future, delay):
-       
-        for i in range(25):
-            print(i, " Sleep a blink > ", self.response, '< response')
-            await asyncio.sleep(delay)
-            if (self.response != ''):
-                print("setting the future ", i)
-                future.set_result(self.response)
-                break
+        return future    
 
-        self.response = ''       
-
-
-    async def go_sleep(self, out, tSeconds=2):
-        data = {}
-        data["command"] = str("goSleep")
-        data["tSeconds"] = tSeconds
-        self.send(data)
-
-        try:
-            await self.wait_for_change('counter')
-        except Exception as e:
-            print('Something wrong: ', e)
-            out.append_stdout('something wrong' + str(e))
-
-
-        # loop = asyncio.get_running_loop()
-        # future = loop.create_future()
-        
-        # print("Go sleep ...")
-        # loop.create_task(self.set_after(future, 0.5))
-
-        # return future
-    
 
     def connect(self, ip_address="nao.local", port="80"):      
         data = {}
