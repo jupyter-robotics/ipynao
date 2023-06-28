@@ -27,4 +27,7 @@ ipympl>=0.8.2
 ipycanvas>=0.9.1
 
 # Python: ipynao library for Nao robot
-ipynao>=0.1.3
+ipynao>=0.2.0
+
+# For examples with images
+Pillow
