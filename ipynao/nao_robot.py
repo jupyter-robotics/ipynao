@@ -75,6 +75,7 @@ class NaoRobotWidget(DOMWidget):
 
     def wait_for_change(widget, value_name):
         future = asyncio.Future()
+        widget.response = None
 
         def get_value_change(change):
             widget.unobserve(get_value_change, names=value_name)
