@@ -39,12 +39,10 @@ export class QiSession {
     this.connected = connected;
     this.disconnected = disconnected;
 
-    console.log('DBG Emile qim about to connect w/17');
     this._socket = io.connect('nao:nao@' + ipAddress + ':' + port, {
       resource: 'libs/qimessaging/2/socket.io',
       'force new connection': true,
     });
-    console.log('DBG Emile qim connecting..');
 
     this._dfd = [];
     this._sigs = [];
@@ -61,8 +59,6 @@ export class QiSession {
     this._socket.on('connect', this.onConnect);
 
     this.service = this.createMetaCall('ServiceDirectory', 'service', 'data');
-
-    console.log('DBG Emile qim done with init');
   }
 
   isConnected () {
@@ -73,8 +69,6 @@ export class QiSession {
   }
   
   onReply(data: any) {
-    console.log('DBG Emile qim reply');
-
     const idm = data['idm'];
     if (
       data['result'] !== undefined &&
@@ -129,7 +123,6 @@ export class QiSession {
   }
 
   onError(data: any) {
-    console.log('DBG Emile qim error');
     if (data['idm'] !== undefined) {
       this._dfd[data['idm']].reject(data['result']);
       delete this._dfd[data['idm']];
@@ -137,7 +130,6 @@ export class QiSession {
   }
 
   onSignal(data: any) {
-    console.log('DBG Emile qim signal');
     const result = data['result'];
     const callback =
       this._sigs[result['obj']][result['signal']][result['link']];
@@ -147,14 +139,12 @@ export class QiSession {
   }
 
   onConnect() {
-    console.log('DBG Emile qim connect');
     if (this.connected) {
       this.connected(this);
     }
   }
 
   onDisconnect(_data: any) {
-    console.log('DBG Emile qim disconnect');
     for (const idm in this._dfd) {
       this._dfd[idm].reject('Call ' + idm + ' canceled: disconnected');
       delete this._dfd[idm];
