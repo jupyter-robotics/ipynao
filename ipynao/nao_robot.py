@@ -9,7 +9,7 @@ TODO: Add module docstring
 """
 
 from ipywidgets import DOMWidget
-from traitlets import Unicode, Bool, Integer
+from traitlets import Unicode, Integer
 from ._frontend import module_name, module_version
 from time import sleep
 import asyncio
@@ -62,9 +62,8 @@ class NaoRobotWidget(DOMWidget):
     value = Unicode('Hello World').tag(sync=True)
     connected = Unicode("Disconnected").tag(sync=True)
     status = Unicode("Not busy").tag(sync=True)
-    synco = Unicode("test message").tag(sync=True)
     response = Unicode("").tag(sync=True)
-    counter = Integer(0).tag(sync=True)
+    counter = Integer(0).tag(sync=True, read_only=True)
     js_response = None
 
     def __init__(self, **kwargs):

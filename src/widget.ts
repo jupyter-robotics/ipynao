@@ -25,7 +25,6 @@ export class NaoRobotModel extends DOMWidgetModel {
   connected = 'Disconnected';
   status = 'Not busy';
   _services: serviceDict = {};
-  synco: string;
 
   defaults() {
     return {
@@ -37,7 +36,6 @@ export class NaoRobotModel extends DOMWidgetModel {
       _view_module: NaoRobotModel.view_module,
       _view_module_version: NaoRobotModel.view_module_version,
       value: 'Hello World',
-      synco: 'something silly',
       connected: 'Disconnected',
       status: 'Not busy',
       response: '',
@@ -241,7 +239,6 @@ export class NaoRobotModel extends DOMWidgetModel {
 }
 
 export class NaoRobotView extends DOMWidgetView {
-  synco: HTMLDivElement;
   txt_connected: HTMLDivElement;
   txt_status: HTMLDivElement;
 
@@ -258,23 +255,13 @@ export class NaoRobotView extends DOMWidgetView {
     this.txt_status.textContent = 'Not busy';
     this.el.appendChild(this.txt_status);
 
-    // Testing element
-    this.synco = document.createElement('div');
-    this.synco.textContent = 'it should be here';
-    this.el.appendChild(this.synco);
-
     this.value_changed();
     this.model.on('change:connected', this.value_changed, this);
     this.model.on('change:status', this.value_changed, this);
-    this.model.on('change:synco', this.value_changed, this);
   }
 
   value_changed() {
-    // this.el.textContent = this.model.get('value');
-    // this.synco = this.model.get('synco');
-    console.log('THE VALUE CHANGED');
     this.txt_connected.textContent = this.model.get('connected');
     this.txt_status.textContent = this.model.get('status');
-    this.synco.textContent = this.model.get('synco');
   }
 }
