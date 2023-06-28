@@ -1,4 +1,5 @@
 .custom-widget {
-  background-color: lightseagreen;
+  color: var(--jp-widgets-color) !important;
+  font-family: monospace;
   padding: 0px 2px;
 }

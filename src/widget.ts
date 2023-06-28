@@ -14,11 +14,17 @@ import '../css/widget.css';
 
 import { QiSession } from './qimessaging';
 
+interface serviceDict {
+  [key: string]: {
+    [key: string]: any;
+  };
+}
+
 export class NaoRobotModel extends DOMWidgetModel {
   qiSession: QiSession;
   connected = 'Disconnected';
   status = 'Not busy';
-  synco: string;
+  _services: serviceDict = {};
 
   defaults() {
     return {
@@ -29,16 +35,14 @@ export class NaoRobotModel extends DOMWidgetModel {
       _view_name: NaoRobotModel.view_name,
       _view_module: NaoRobotModel.view_module,
       _view_module_version: NaoRobotModel.view_module_version,
-      value: 'Hello World',
-      synco: 'something silly',
       connected: 'Disconnected',
       status: 'Not busy',
+      counter: 0,
     };
   }
 
   initialize(attributes: any, options: any): void {
     super.initialize(attributes, options);
-
     this.on('msg:custom', this.onCommand);
   }
 
@@ -48,17 +52,49 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.save_changes();
   }
 
+  private validateIPaddress(ipAddress: string) {
+    // TODO: validate port also
+    if (ipAddress === 'nao.local') {
+      return true;
+    } else {
+      const regexp = new RegExp(
+        '^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(.(?!$)|$)){4}$'
+      );
+      return regexp.test(ipAddress);
+    }
+  }
+
   async connect(ipAddress: string, port: string) {
-    console.log('REMOVE the command was to connect');
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
     this.changeStatus('Establishing connection');
+
+    if (!this.validateIPaddress(ipAddress)) {
+      this.changeStatus('Invalid IP address');
+      console.warn('IP Address ', ipAddress, ' is not valid');
+      return;
+    }
 
     this.qiSession = new QiSession(ipAddress, port);
 
-    this.connected = 'Connected';
-    this.set('connected', 'Connected');
-    this.save_changes();
+    // Timeout after ~10 seconds
+    for (let i = 0; i < 100; i++) {
+      await sleep(100);
+      if (this.qiSession.isConnected()) {
+        this.connected = 'Connected';
+        this.set('connected', 'Connected');
+        this.save_changes();
+        this.changeStatus('Available');
+        console.log('Connection successful after ', i / 10.0, ' seconds.');
+        break;
+      }
+    }
 
-    this.changeStatus('Not busy');
+    // Handle connection failure
+    if (!this.qiSession.isConnected()) {
+      console.error('Connection to ', ipAddress, ' could not be established.');
+      this.changeStatus('Unavailable');
+    }
   }
 
   disconnect() {
@@ -69,46 +105,58 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.changeStatus('Unavailable');
   }
 
-  async Testing() {
-    this.qiSession = new QiSession();
-    const tts = await this.qiSession.service('ALTextToSpeech');
-    // let msg : any = Object.getOwnPropertyNames(tts);
-    const aThing: any = this.send(tts);
-    console.log('A thing: ', aThing);
-    console.log('JS sent something');
-  }
+  private async createService(serviceName: string) {
+    this.changeStatus('Creating service ' + serviceName);
+    const servicePromise = this.qiSession.service(serviceName);
 
-  async goSleep(tSeconds: number) {
-    console.log('IN THE SLEEPING SESH');
-    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    const naoService = await servicePromise
+      .then((resolution: any) => {
+        return resolution;
+      })
+      .catch((rejection: string) => {
+        this.changeStatus(rejection);
+        return rejection;
+      });
 
-    await sleep(tSeconds * 1000);
-
-    console.log('WAKING UP');
-
-    this.set('synco', 'something else');
-    this.save_changes();
-
-    this.send({ data: 'purple' });
-    console.log('SETTED THE VALUE');
+    // Store service only when successfully created
+    if (typeof naoService === 'object') {
+      this._services[serviceName] = naoService;
+      this.changeStatus(serviceName + ' available');
+    }
   }
 
   private async callService(
     serviceName: string,
     methodName: string,
     args: any,
-    kwargs: any
+    _kwargs: any
   ) {
-    const naoService = await this.qiSession.service(serviceName);
+    if (this._services[serviceName][methodName] === undefined) {
+      this.changeStatus(methodName + ' does not exist for ' + serviceName);
+      return;
+    }
 
-    this.changeStatus('Running method' + methodName);
-    await naoService[methodName](...args);
+    // let serviceResponse;
+    this.changeStatus('Running method ' + methodName);
 
-    this.changeStatus('Task completed');
+    const servicePromise = this._services[serviceName][methodName](...args);
+    await servicePromise
+      .then((resolution: any) => {
+        this.changeStatus('Task completed');
+        if (resolution !== undefined) {
+          this.send(resolution);
+        }
+      })
+      .catch((rejection: string) => {
+        this.changeStatus(rejection);
+        this.send(rejection);
+      });
+
+    this.set('counter', this.get('counter') + 1);
+    this.save_changes();
   }
 
   private async onCommand(commandData: any, buffers: any) {
-    console.log('REMOVE onCommand', commandData);
     const cmd = commandData['command'];
 
     switch (cmd) {
@@ -120,8 +168,11 @@ export class NaoRobotModel extends DOMWidgetModel {
         this.disconnect();
         break;
 
+      case 'createService':
+        this.createService(commandData['service']);
+        break;
+
       case 'callService':
-        console.log('RECEIVING COMMAND FOR SERVICE');
         await this.callService(
           commandData['service'],
           commandData['method'],
@@ -130,8 +181,6 @@ export class NaoRobotModel extends DOMWidgetModel {
         );
         break;
     }
-
-    console.log('End of OnCommand');
   }
 
   static serializers: ISerializers = {
@@ -139,7 +188,6 @@ export class NaoRobotModel extends DOMWidgetModel {
     // Add any extra serializers here
   };
 
-  // var qiSession = // TODO:
   static model_name = 'NaoRobotModel';
   static model_module = MODULE_NAME;
   static model_module_version = MODULE_VERSION;
@@ -149,7 +197,6 @@ export class NaoRobotModel extends DOMWidgetModel {
 }
 
 export class NaoRobotView extends DOMWidgetView {
-  synco: HTMLDivElement;
   txt_connected: HTMLDivElement;
   txt_status: HTMLDivElement;
 
@@ -166,27 +213,13 @@ export class NaoRobotView extends DOMWidgetView {
     this.txt_status.textContent = 'Not busy';
     this.el.appendChild(this.txt_status);
 
-    // Testing element
-    this.synco = document.createElement('div');
-    this.synco.textContent = 'it should be here';
-    this.el.appendChild(this.synco);
-
-    console.log('RENDERING');
-    console.log(this.model.get('connected'), ' CONNECTED');
-    console.log(this.model.get('synco'), ' SYNCO');
-
     this.value_changed();
     this.model.on('change:connected', this.value_changed, this);
     this.model.on('change:status', this.value_changed, this);
-    this.model.on('change:synco', this.value_changed, this);
   }
 
   value_changed() {
-    // this.el.textContent = this.model.get('value');
-    // this.synco = this.model.get('synco');
-    console.log('THE VALUE CHANGED');
     this.txt_connected.textContent = this.model.get('connected');
     this.txt_status.textContent = this.model.get('status');
-    this.synco.textContent = this.model.get('synco');
   }
 }
