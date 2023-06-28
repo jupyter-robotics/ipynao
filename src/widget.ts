@@ -35,10 +35,8 @@ export class NaoRobotModel extends DOMWidgetModel {
       _view_name: NaoRobotModel.view_name,
       _view_module: NaoRobotModel.view_module,
       _view_module_version: NaoRobotModel.view_module_version,
-      value: 'Hello World',
       connected: 'Disconnected',
       status: 'Not busy',
-      response: '',
       counter: 0,
     };
   }
@@ -141,29 +139,25 @@ export class NaoRobotModel extends DOMWidgetModel {
       return;
     }
 
-    let serviceResponse;
+    // let serviceResponse;
     this.changeStatus('Running method ' + methodName);
 
     const servicePromise = this._services[serviceName][methodName](...args);
-    serviceResponse = await servicePromise.then(
+    await servicePromise.then(
       (resolution: any) => {
         this.changeStatus('Task completed');
-        this.set('counter', this.get('counter') + 1);
-        return resolution;
+        if (resolution !== undefined) {
+          this.send(resolution)
+        }
       }
     ).catch(
       (rejection: string) => {
         this.changeStatus(rejection);
+        this.send(rejection);
       }
     );
 
-    
-    if (serviceResponse !== undefined) {
-      console.log("OOO received response ", serviceResponse);
-      this.send(serviceResponse);
-      this.set('status', serviceResponse.toString());
-    }
-
+    this.set('counter', this.get('counter') + 1);
     this.save_changes();
   }
 
