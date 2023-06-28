@@ -54,10 +54,12 @@ export class NaoRobotModel extends DOMWidgetModel {
 
   private validateIPaddress(ipAddress: string) {
     // TODO: validate port also
-    if (ipAddress == 'nao.local') {
+    if (ipAddress === 'nao.local') {
       return true;
     } else {
-      const regexp = new RegExp('^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$');
+      const regexp = new RegExp(
+        '^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(.(?!$)|$)){4}$'
+      );
       return regexp.test(ipAddress);
     }
   }
@@ -83,16 +85,16 @@ export class NaoRobotModel extends DOMWidgetModel {
         this.set('connected', 'Connected');
         this.save_changes();
         this.changeStatus('Available');
-        console.log("Connection successful after ", i/10.0, " seconds.");
+        console.log('Connection successful after ', i / 10.0, ' seconds.');
         break;
       }
     }
 
     // Handle connection failure
     if (!this.qiSession.isConnected()) {
-      console.error("Connection to ", ipAddress, " could not be established.");
+      console.error('Connection to ', ipAddress, ' could not be established.');
       this.changeStatus('Unavailable');
-    }    
+    }
   }
 
   disconnect() {
@@ -103,26 +105,21 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.changeStatus('Unavailable');
   }
 
-
-  private async createService(
-    serviceName: string,
-  ) {
+  private async createService(serviceName: string) {
     this.changeStatus('Creating service ' + serviceName);
     const servicePromise = this.qiSession.service(serviceName);
 
-    const naoService = await servicePromise.then(
-      (resolution: object) => {
+    const naoService = await servicePromise
+      .then((resolution: any) => {
         return resolution;
-      }
-    ).catch(
-      (rejection: string) => {
+      })
+      .catch((rejection: string) => {
         this.changeStatus(rejection);
         return rejection;
-      }
-    );
+      });
 
     // Store service only when successfully created
-    if (typeof(naoService) === 'object') {
+    if (typeof naoService === 'object') {
       this._services[serviceName] = naoService;
       this.changeStatus(serviceName + ' available');
     }
@@ -143,19 +140,17 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.changeStatus('Running method ' + methodName);
 
     const servicePromise = this._services[serviceName][methodName](...args);
-    await servicePromise.then(
-      (resolution: any) => {
+    await servicePromise
+      .then((resolution: any) => {
         this.changeStatus('Task completed');
         if (resolution !== undefined) {
-          this.send(resolution)
+          this.send(resolution);
         }
-      }
-    ).catch(
-      (rejection: string) => {
+      })
+      .catch((rejection: string) => {
         this.changeStatus(rejection);
         this.send(rejection);
-      }
-    );
+      });
 
     this.set('counter', this.get('counter') + 1);
     this.save_changes();
@@ -163,7 +158,7 @@ export class NaoRobotModel extends DOMWidgetModel {
 
   private async onCommand(commandData: any, buffers: any) {
     const cmd = commandData['command'];
-    
+
     switch (cmd) {
       case 'connect':
         await this.connect(commandData['ipAddress'], commandData['port']);
@@ -186,7 +181,6 @@ export class NaoRobotModel extends DOMWidgetModel {
         );
         break;
     }
-
   }
 
   static serializers: ISerializers = {

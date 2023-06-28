@@ -48,11 +48,17 @@ export class QiSession {
     this._sigs = [];
     this._idm = 0;
 
-    this._socket.on('reply', (data: any) => {this.onReply(data)});
+    this._socket.on('reply', (data: any) => {
+      this.onReply(data);
+    });
 
-    this._socket.on('error', (data: any) => {this.onError(data)});
+    this._socket.on('error', (data: any) => {
+      this.onError(data);
+    });
 
-    this._socket.on('signal', (data: any) => {this.onSignal(data)});
+    this._socket.on('signal', (data: any) => {
+      this.onSignal(data);
+    });
 
     this._socket.on('disconnect', this.onDisconnect);
 
@@ -61,13 +67,12 @@ export class QiSession {
     this.service = this.createMetaCall('ServiceDirectory', 'service', 'data');
   }
 
-  isConnected () {
-    const connected : boolean = 
-        (this._socket !== undefined) ?
-        this._socket.socket.connected : false;
+  isConnected() {
+    const connected: boolean =
+      this._socket !== undefined ? this._socket.socket.connected : false;
     return connected;
   }
-  
+
   onReply(data: any) {
     const idm = data['idm'];
     if (
@@ -207,5 +212,4 @@ export class QiSession {
 
     return signalObject;
   }
-
 }
