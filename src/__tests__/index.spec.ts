@@ -13,14 +13,14 @@ describe('NaoRobot', () => {
     it('should be createable', () => {
       const model = createTestModel(NaoRobotModel);
       expect(model).toBeInstanceOf(NaoRobotModel);
-      expect(model.get('value')).toEqual('Hello World');
+      expect(model.get('connected')).toEqual('Disconnected');
     });
 
     it('should be createable with a value', () => {
-      const state = { value: 'Foo Bar!' };
+      const state = { connected: 'Foo Bar!' };
       const model = createTestModel(NaoRobotModel, state);
       expect(model).toBeInstanceOf(NaoRobotModel);
-      expect(model.get('value')).toEqual('Foo Bar!');
+      expect(model.get('connected')).toEqual('Foo Bar!');
     });
   });
 });
