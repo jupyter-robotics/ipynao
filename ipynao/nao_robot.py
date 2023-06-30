@@ -11,7 +11,6 @@ TODO: Add module docstring
 from ipywidgets import DOMWidget
 from traitlets import Unicode, Integer
 from ._frontend import module_name, module_version
-from time import sleep
 import asyncio
 
 
@@ -25,8 +24,7 @@ class NaoRobotService():
         self.name = service_name
         self.widget = widget
 
-    
-    def create_service_msg(self, method_name, *args, **kwargs):
+    def _create_msg(self, method_name, *args, **kwargs):
         data = {}
         data["command"] = "callService"
         data["service"] = str(self.name)
@@ -34,19 +32,14 @@ class NaoRobotService():
         # convert tuple to list to avoid empty arg values
         data["args"]    = list(args)
         data["kwargs"]  = kwargs
-
+        return data
+    
+    def call_service(self, method_name, *args, **kwargs):
+        data = self._create_msg(method_name, *args, **kwargs)
         self.widget.send(data)
 
-    # TODO: combine msg creating into separate function
-    async def async_create_service_msg(self, method_name, *args, **kwargs):
-        data = {}
-        data["command"] = "callService"
-        data["service"] = str(self.name)
-        data["method"]  = str(method_name)
-        # convert tuple to list to avoid empty arg values
-        data["args"]    = list(args)
-        data["kwargs"]  = kwargs
-
+    async def async_call_service(self, method_name, *args, **kwargs):
+        data = self._create_msg(method_name, *args, **kwargs)
         self.widget.send(data)
 
         try:
@@ -57,11 +50,10 @@ class NaoRobotService():
         
 
     def __getattr__(self, method_name):
-        # TODO: add error for when service is not ready
         if (method_name[:6] == "async_"):
-            return lambda *x, **y: self.async_create_service_msg(method_name[6:], *x, **y)
+            return lambda *x, **y: self.async_call_service(method_name[6:], *x, **y)
         else:
-            return lambda *x, **y: self.create_service_msg(method_name, *x, **y)
+            return lambda *x, **y: self.call_service(method_name, *x, **y)
 
 
 class NaoRobotWidget(DOMWidget):
