@@ -79,7 +79,6 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     // Timeout after ~10 seconds
     for (let i = 0; i < 100; i++) {
-      await sleep(100);
       if (this.qiSession.isConnected()) {
         this.connected = 'Connected';
         this.set('connected', 'Connected');
@@ -88,6 +87,7 @@ export class NaoRobotModel extends DOMWidgetModel {
         console.log('Connection successful after ', i / 10.0, ' seconds.');
         break;
       }
+      await sleep(100);
     }
 
     // Handle connection failure
@@ -106,6 +106,12 @@ export class NaoRobotModel extends DOMWidgetModel {
   }
 
   private async createService(serviceName: string) {
+    // Skip if service exists already
+    if (this._services[serviceName] !== undefined) {
+      console.log("Service " + serviceName + " exists.");
+      return;
+    }
+
     this.changeStatus('Creating service ' + serviceName);
     const servicePromise = this.qiSession.service(serviceName);
 
@@ -131,12 +137,23 @@ export class NaoRobotModel extends DOMWidgetModel {
     args: any,
     _kwargs: any
   ) {
+    // Wait for service to become available
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    // Timeout after ~5 seconds
+    for (let i = 0; i < 50; i++) {
+      if (this._services[serviceName] !== undefined) {
+        console.log('Service available after ', i / 10.0, ' seconds.');
+        break;
+      }
+      await sleep(100);
+    }    
+
     if (this._services[serviceName][methodName] === undefined) {
       this.changeStatus(methodName + ' does not exist for ' + serviceName);
       return;
     }
 
-    // let serviceResponse;
     this.changeStatus('Running method ' + methodName);
 
     const servicePromise = this._services[serviceName][methodName](...args);
