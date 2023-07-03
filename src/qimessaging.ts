@@ -73,6 +73,10 @@ export class QiSession {
     return connected;
   }
 
+  disconnect() {
+    this._socket.disconnect();
+  }
+
   onReply(data: any) {
     const idm = data['idm'];
     if (

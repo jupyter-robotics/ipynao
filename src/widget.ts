@@ -99,9 +99,9 @@ export class NaoRobotModel extends DOMWidgetModel {
 
   disconnect() {
     console.log('REMOVE disconnecting');
-    // TODO: Make disconnect function
-    // delete this.qiSession;
-    this.connected = 'Disconnected';
+    this.qiSession.disconnect();
+    this.set('connected', 'Disconnected');
+    this.save_changes();
     this.changeStatus('Unavailable');
   }
 

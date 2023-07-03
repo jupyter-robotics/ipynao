@@ -14,7 +14,6 @@ from ._frontend import module_name, module_version
 import asyncio
 
 
-
 class NaoRobotService():
     name = None
     widget = None
@@ -110,6 +109,12 @@ class NaoRobotWidget(DOMWidget):
         data["command"] = str("connect")
         data["ipAddress"] = str(ip_address)
         data["port"] = str(port)
+        self.send(data)
+
+    
+    def disconnect(self):
+        data = {}
+        data["command"] = str("disconnect")
         self.send(data)
 
 
