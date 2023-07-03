@@ -25,6 +25,8 @@ export class NaoRobotModel extends DOMWidgetModel {
   connected = 'Disconnected';
   status = 'Not busy';
   _services: serviceDict = {};
+  _ipAddress: string;
+  _port: string;
 
   defaults() {
     return {
@@ -75,6 +77,9 @@ export class NaoRobotModel extends DOMWidgetModel {
       return;
     }
 
+    this._ipAddress = ipAddress;
+    this._port = port;
+
     this.qiSession = new QiSession(ipAddress, port);
 
     // Timeout after ~10 seconds
@@ -98,14 +103,19 @@ export class NaoRobotModel extends DOMWidgetModel {
   }
 
   disconnect() {
-    console.log('REMOVE disconnecting');
     this.qiSession.disconnect();
+    this._services = {};
     this.set('connected', 'Disconnected');
     this.save_changes();
     this.changeStatus('Unavailable');
   }
 
   private async createService(serviceName: string) {
+    // Reconnect as needed
+    if (!this.qiSession.isConnected()) {
+      await this.connect(this._ipAddress, this._port);
+    }
+
     // Skip if service exists already
     if (this._services[serviceName] !== undefined) {
       console.log("Service " + serviceName + " exists.");
@@ -137,6 +147,12 @@ export class NaoRobotModel extends DOMWidgetModel {
     args: any,
     _kwargs: any
   ) {
+
+    // Reconnect as needed
+    if (!this.qiSession.isConnected()) {
+      await this.connect(this._ipAddress, this._port);
+    }
+
     // Wait for service to become available
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
