@@ -130,9 +130,10 @@ export class NaoRobotModel extends DOMWidgetModel {
   }
 
   private async createService(serviceName: string) {
-    
-    const isConnected : boolean = await this.checkConnection();
-    if (!isConnected) return;
+    const isConnected: boolean = await this.checkConnection();
+    if (!isConnected) {
+      return;
+    }
 
     // Skip if service exists already
     if (this._services[serviceName] !== undefined) {
@@ -165,8 +166,10 @@ export class NaoRobotModel extends DOMWidgetModel {
     args: any,
     _kwargs: any
   ) {
-    const isConnected : boolean = await this.checkConnection();
-    if (!isConnected) return;
+    const isConnected: boolean = await this.checkConnection();
+    if (!isConnected) {
+      return;
+    }
 
     // Wait for service to become available
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
