@@ -49,7 +49,7 @@ class NaoRobotService():
             await self.widget.wait_for_change('counter', self.output)
         except Exception as e:
             return e
-        return self.widget.response
+        return self.widget.response["data"]
         
 
     def __getattr__(self, method_name):
@@ -73,7 +73,6 @@ class NaoRobotWidget(DOMWidget):
     status = Unicode("Not busy").tag(sync=True)
     counter = Integer(0).tag(sync=True)
     response = None
-    js_error = None
 
 
     def __init__(self, **kwargs):
@@ -83,26 +82,22 @@ class NaoRobotWidget(DOMWidget):
 
     def _handle_frontend_msg(self, model, msg, buffer):
         print("Received frontend msg: ", msg)
-        if (msg["isError"]):
-            self.js_error = msg["data"]
-        else:
-            self.response = msg["data"]
+        self.response = msg
 
 
     def wait_for_change(widget, value_name, output=Output()):
         future = asyncio.Future()
         widget.response = None
-        widget.js_error = None
 
         def get_value_change(change):
             widget.unobserve(get_value_change, names=value_name)
-            if (widget.response != None or widget.js_error != None):
-                if (widget.js_error):
-                    future.set_exception(Exception(widget.js_error))
-                    output.append_stderr(widget.js_error)
+            if (widget.response != None):
+                if (widget.response["isError"]):
+                    future.set_exception(Exception(widget.response["data"]))
+                    output.append_stderr(widget.response["data"])
                 else:
-                    future.set_result(widget.response)
-                    output.append_stdout(widget.response)
+                    future.set_result(widget.response["data"])
+                    output.append_stdout(widget.response["data"])
             else:
                 future.set_result(change)    
         
