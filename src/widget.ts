@@ -110,11 +110,29 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.changeStatus('Unavailable');
   }
 
-  private async createService(serviceName: string) {
-    // Reconnect as needed
+  private async checkConnection() {
+    // Cannot reconnect without initial connection
+    if (!this._ipAddress) {
+      this.send({
+        isError: true,
+        data: 'Cannot connect without IP Address.',
+      });
+      this.set('counter', this.get('counter') + 1);
+      this.save_changes();
+      return false;
+    }
+
+    // Reconnect if possible
     if (!this.qiSession.isConnected()) {
       await this.connect(this._ipAddress, this._port);
     }
+    return true;
+  }
+
+  private async createService(serviceName: string) {
+    
+    const isConnected : boolean = await this.checkConnection();
+    if (!isConnected) return;
 
     // Skip if service exists already
     if (this._services[serviceName] !== undefined) {
@@ -147,10 +165,8 @@ export class NaoRobotModel extends DOMWidgetModel {
     args: any,
     _kwargs: any
   ) {
-    // Reconnect as needed
-    if (!this.qiSession.isConnected()) {
-      await this.connect(this._ipAddress, this._port);
-    }
+    const isConnected : boolean = await this.checkConnection();
+    if (!isConnected) return;
 
     // Wait for service to become available
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
