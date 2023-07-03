@@ -140,8 +140,8 @@ export class NaoRobotModel extends DOMWidgetModel {
     // Wait for service to become available
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-    // Timeout after ~5 seconds
-    for (let i = 0; i < 50; i++) {
+    // Timeout after ~10 seconds
+    for (let i = 0; i < 100; i++) {
       if (this._services[serviceName] !== undefined) {
         console.log('Service available after ', i / 10.0, ' seconds.');
         break;
@@ -160,13 +160,18 @@ export class NaoRobotModel extends DOMWidgetModel {
     await servicePromise
       .then((resolution: any) => {
         this.changeStatus('Task completed');
-        if (resolution !== undefined) {
-          this.send(resolution);
-        }
+        this.send({
+          isError: false,
+          data: resolution ?? true
+        });
+        
       })
       .catch((rejection: string) => {
         this.changeStatus(rejection);
-        this.send(rejection);
+        this.send({
+          isError: true,
+          data: rejection
+        });
       });
 
     this.set('counter', this.get('counter') + 1);

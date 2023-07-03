@@ -8,7 +8,7 @@
 TODO: Add module docstring
 """
 
-from ipywidgets import DOMWidget
+from ipywidgets import DOMWidget, Output
 from traitlets import Unicode, Integer
 from ._frontend import module_name, module_version
 import asyncio
@@ -20,9 +20,10 @@ class NaoRobotService():
     widget = None
     output = None
 
-    def __init__(self, widget, service_name):
+    def __init__(self, widget, service_name, output=Output()):
         self.name = service_name
         self.widget = widget
+        self.output = output
 
     def _create_msg(self, method_name, *args, **kwargs):
         data = {}
@@ -43,7 +44,9 @@ class NaoRobotService():
         self.widget.send(data)
 
         try:
-            await self.widget.wait_for_change('counter')
+            self.output.clear_output()
+            self.output.append_stdout("Calling service... \n")
+            await self.widget.wait_for_change('counter', self.output)
         except Exception as e:
             return e
         return self.widget.response
@@ -70,6 +73,7 @@ class NaoRobotWidget(DOMWidget):
     status = Unicode("Not busy").tag(sync=True)
     counter = Integer(0).tag(sync=True)
     response = None
+    js_error = None
 
 
     def __init__(self, **kwargs):
@@ -79,17 +83,26 @@ class NaoRobotWidget(DOMWidget):
 
     def _handle_frontend_msg(self, model, msg, buffer):
         print("Received frontend msg: ", msg)
-        self.response = msg
+        if (msg["isError"]):
+            self.js_error = msg["data"]
+        else:
+            self.response = msg["data"]
 
 
-    def wait_for_change(widget, value_name):
+    def wait_for_change(widget, value_name, output=Output()):
         future = asyncio.Future()
         widget.response = None
+        widget.js_error = None
 
         def get_value_change(change):
             widget.unobserve(get_value_change, names=value_name)
-            if (widget.response != None):
-                future.set_result(widget.response)
+            if (widget.response != None or widget.js_error != None):
+                if (widget.js_error):
+                    future.set_exception(Exception(widget.js_error))
+                    output.append_stderr(widget.js_error)
+                else:
+                    future.set_result(widget.response)
+                    output.append_stdout(widget.response)
             else:
                 future.set_result(change)    
         
@@ -105,9 +118,9 @@ class NaoRobotWidget(DOMWidget):
         self.send(data)
 
 
-    def service(self, service_name):
+    def service(self, service_name, output=Output()):
         data = {}
         data["command"] = str("createService")
         data["service"] = str(service_name)
         self.send(data)
-        return NaoRobotService(self, service_name)
+        return NaoRobotService(self, service_name, output)
