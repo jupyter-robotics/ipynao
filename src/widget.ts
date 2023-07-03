@@ -118,7 +118,7 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     // Skip if service exists already
     if (this._services[serviceName] !== undefined) {
-      console.log("Service " + serviceName + " exists.");
+      console.log('Service ' + serviceName + ' exists.');
       return;
     }
 
@@ -147,7 +147,6 @@ export class NaoRobotModel extends DOMWidgetModel {
     args: any,
     _kwargs: any
   ) {
-
     // Reconnect as needed
     if (!this.qiSession.isConnected()) {
       await this.connect(this._ipAddress, this._port);
@@ -163,7 +162,7 @@ export class NaoRobotModel extends DOMWidgetModel {
         break;
       }
       await sleep(100);
-    }    
+    }
 
     if (this._services[serviceName][methodName] === undefined) {
       this.changeStatus(methodName + ' does not exist for ' + serviceName);
@@ -178,15 +177,14 @@ export class NaoRobotModel extends DOMWidgetModel {
         this.changeStatus('Task completed');
         this.send({
           isError: false,
-          data: resolution ?? true
+          data: resolution ?? true,
         });
-        
       })
       .catch((rejection: string) => {
         this.changeStatus(rejection);
         this.send({
           isError: true,
-          data: rejection
+          data: rejection,
         });
       });
 
