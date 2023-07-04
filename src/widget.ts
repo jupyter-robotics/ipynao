@@ -224,7 +224,7 @@ export class NaoRobotModel extends DOMWidgetModel {
         break;
 
       case 'createService':
-        this.createService(commandData['service']);
+        await this.createService(commandData['service']);
         break;
 
       case 'callService':
