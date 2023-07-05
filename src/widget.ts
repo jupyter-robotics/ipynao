@@ -158,6 +158,8 @@ export class NaoRobotModel extends DOMWidgetModel {
           isError: true,
           data: rejection,
         });
+        this.set('counter', this.get('counter') + 1);
+        this.save_changes();
         return rejection;
       });
 
@@ -192,12 +194,24 @@ export class NaoRobotModel extends DOMWidgetModel {
     }
 
     if (this._services[serviceName] === undefined) {
-      this.changeStatus(serviceName + ' not available.');
+      this.changeStatus(serviceName + ' not available');
+      this.send({
+        isError: true,
+        data: serviceName + ' not available'
+      });
+      this.set('counter', this.get('counter') + 1);
+      this.save_changes();
       return;
     }
 
     if (this._services[serviceName][methodName] === undefined) {
-      this.changeStatus(methodName + ' does not exist for ' + serviceName);
+      this.changeStatus(`${methodName} does not exist for ${serviceName}`);
+      this.send({
+        isError: true,
+        data: `${methodName} does not exist for ${serviceName}`
+      });
+      this.set('counter', this.get('counter') + 1);
+      this.save_changes();
       return;
     }
 
