@@ -83,7 +83,7 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.qiSession = new QiSession(ipAddress, port);
 
     // Timeout after ~10 seconds
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 10; i++) {
       if (this.qiSession.isConnected()) {
         this.connected = 'Connected';
         this.set('connected', 'Connected');
@@ -146,10 +146,18 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     const naoService = await servicePromise
       .then((resolution: any) => {
+        this.send({
+          isError: false,
+          data: resolution ?? true,
+        });
         return resolution;
       })
       .catch((rejection: string) => {
         this.changeStatus(rejection);
+        this.send({
+          isError: true,
+          data: rejection,
+        });
         return rejection;
       });
 
@@ -181,6 +189,11 @@ export class NaoRobotModel extends DOMWidgetModel {
         break;
       }
       await sleep(100);
+    }
+
+    if (this._services[serviceName] === undefined) {
+      this.changeStatus(serviceName + ' not available.');
+      return;
     }
 
     if (this._services[serviceName][methodName] === undefined) {
