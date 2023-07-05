@@ -83,7 +83,7 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.qiSession = new QiSession(ipAddress, port);
 
     // Timeout after ~10 seconds
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 100; i++) {
       if (this.qiSession.isConnected()) {
         this.connected = 'Connected';
         this.set('connected', 'Connected');
@@ -103,7 +103,9 @@ export class NaoRobotModel extends DOMWidgetModel {
   }
 
   disconnect() {
-    this.qiSession.disconnect();
+    if (this.qiSession) {
+      this.qiSession.disconnect();
+    };
     this._services = {};
     this.set('connected', 'Disconnected');
     this.save_changes();
@@ -136,7 +138,7 @@ export class NaoRobotModel extends DOMWidgetModel {
     }
 
     // Skip if service exists already
-    if (this._services[serviceName] !== undefined) {
+    if (this._services[serviceName]) {
       console.log('Service ' + serviceName + ' exists.');
       return;
     }
@@ -186,14 +188,14 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     // Timeout after ~10 seconds
     for (let i = 0; i < 100; i++) {
-      if (this._services[serviceName] !== undefined) {
+      if (this._services[serviceName]) {
         console.log('Service available after ', i / 10.0, ' seconds.');
         break;
       }
       await sleep(100);
     }
 
-    if (this._services[serviceName] === undefined) {
+    if (!this._services[serviceName]) {
       this.changeStatus(serviceName + ' not available');
       this.send({
         isError: true,
@@ -204,7 +206,7 @@ export class NaoRobotModel extends DOMWidgetModel {
       return;
     }
 
-    if (this._services[serviceName][methodName] === undefined) {
+    if (!this._services[serviceName][methodName]) {
       this.changeStatus(`${methodName} does not exist for ${serviceName}`);
       this.send({
         isError: true,
