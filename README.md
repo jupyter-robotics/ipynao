@@ -1,11 +1,13 @@
 
 # ipynao
 
-[![Build Status](https://travis-ci.org/QuantStack/ipynao.svg?branch=master)](https://travis-ci.org/QuantStack/ipynao)
-[![codecov](https://codecov.io/gh/QuantStack/ipynao/branch/master/graph/badge.svg)](https://codecov.io/gh/QuantStack/ipynao)
+[![Build Status](https://travis-ci.org/QuantStack/ipynao.svg?branch=main)](https://travis-ci.org/QuantStack/ipynao)
+[![codecov](https://codecov.io/gh/QuantStack/ipynao/branch/main/graph/badge.svg)](https://codecov.io/gh/QuantStack/ipynao)
 
 
 A widget library for controlling Nao
+
+[![Video of ipynao in JupyterLite](https://raw.githubusercontent.com/jupyter-robotics/ipynao/main/docs/assets/nao_hey.gif)](https://www.youtube.com/watch?v=3v2gOTS5anQ)
 
 ## Installation
 
