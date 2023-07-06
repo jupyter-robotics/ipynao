@@ -99,14 +99,16 @@ export class NaoRobotModel extends DOMWidgetModel {
     if (!this.qiSession.isConnected()) {
       this.disconnect();
       console.error('Connection to ', ipAddress, ' could not be established.');
-      this.changeStatus('Connection to ' + ipAddress + ' could not be established.');
+      this.changeStatus(
+        'Connection to ' + ipAddress + ' could not be established.'
+      );
     }
   }
 
   disconnect() {
     if (this.qiSession && this.qiSession.isConnected()) {
       this.qiSession.disconnect();
-    };
+    }
     this._services = {};
     this.set('connected', 'Disconnected');
     this.save_changes();
@@ -119,7 +121,7 @@ export class NaoRobotModel extends DOMWidgetModel {
       this.send({
         isError: true,
         data: 'Cannot connect without IP Address.',
-        requestID: requestID
+        requestID: requestID,
       });
       this.set('counter', this.get('counter') + 1);
       this.save_changes();
@@ -156,7 +158,7 @@ export class NaoRobotModel extends DOMWidgetModel {
         this.send({
           isError: false,
           data: true, // TODO: resolution ?? true,
-          requestID: requestID + 1 // Note above
+          requestID: requestID + 1, // Note above
         });
         return resolution;
       })
@@ -165,7 +167,7 @@ export class NaoRobotModel extends DOMWidgetModel {
         this.send({
           isError: true,
           data: rejection,
-          requestID: requestID + 1 // Note above
+          requestID: requestID + 1, // Note above
         });
         this.set('counter', this.get('counter') + 1);
         this.save_changes();
@@ -184,7 +186,7 @@ export class NaoRobotModel extends DOMWidgetModel {
     methodName: string,
     args: any,
     _kwargs: any,
-    requestID: number = 1000
+    requestID: number
   ) {
     const isConnected: boolean = await this.checkConnection(requestID);
     if (!isConnected) {
@@ -210,7 +212,7 @@ export class NaoRobotModel extends DOMWidgetModel {
       this.send({
         isError: true,
         data: serviceName + ' not available',
-        requestID: requestID
+        requestID: requestID,
       });
       this.set('counter', this.get('counter') + 1);
       this.save_changes();
@@ -222,7 +224,7 @@ export class NaoRobotModel extends DOMWidgetModel {
       this.send({
         isError: true,
         data: `${methodName} does not exist for ${serviceName}`,
-        requestID: requestID
+        requestID: requestID,
       });
       this.set('counter', this.get('counter') + 1);
       this.save_changes();
@@ -238,7 +240,7 @@ export class NaoRobotModel extends DOMWidgetModel {
         this.send({
           isError: false,
           data: resolution ?? true,
-          requestID: requestID
+          requestID: requestID,
         });
       })
       .catch((rejection: string) => {
@@ -246,7 +248,7 @@ export class NaoRobotModel extends DOMWidgetModel {
         this.send({
           isError: true,
           data: rejection,
-          requestID: requestID
+          requestID: requestID,
         });
       });
 
@@ -260,7 +262,7 @@ export class NaoRobotModel extends DOMWidgetModel {
     switch (cmd) {
       case 'connect':
         await this.connect(
-          commandData['ipAddress'], 
+          commandData['ipAddress'],
           commandData['port'],
           commandData['requestID']
         );
