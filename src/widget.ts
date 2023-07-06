@@ -97,8 +97,9 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     // Handle connection failure
     if (!this.qiSession.isConnected()) {
+      this.disconnect();
       console.error('Connection to ', ipAddress, ' could not be established.');
-      this.changeStatus('Unavailable');
+      this.changeStatus('Connection to ' + ipAddress + ' could not be established.');
     }
   }
 
@@ -126,6 +127,8 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     // Reconnect if possible
     if (!this.qiSession.isConnected()) {
+      this.set('connected', 'Disconnected');
+      this.save_changes();
       await this.connect(this._ipAddress, this._port);
     }
     return true;
@@ -188,6 +191,11 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     // Timeout after ~10 seconds
     for (let i = 0; i < 100; i++) {
+      // Do not wait for service if there is no connection
+      if (!this.qiSession.isConnected()) {
+        this.disconnect();
+        break;
+      }
       if (this._services[serviceName]) {
         console.log('Service available after ', i / 10.0, ' seconds.');
         break;
