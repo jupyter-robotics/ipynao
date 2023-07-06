@@ -66,7 +66,7 @@ export class NaoRobotModel extends DOMWidgetModel {
     }
   }
 
-  async connect(ipAddress: string, port: string) {
+  async connect(ipAddress: string, port: string, requestID: number) {
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
     this.changeStatus('Establishing connection');
@@ -97,25 +97,31 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     // Handle connection failure
     if (!this.qiSession.isConnected()) {
+      this.disconnect();
       console.error('Connection to ', ipAddress, ' could not be established.');
-      this.changeStatus('Unavailable');
+      this.changeStatus(
+        'Connection to ' + ipAddress + ' could not be established.'
+      );
     }
   }
 
   disconnect() {
-    this.qiSession.disconnect();
+    if (this.qiSession && this.qiSession.isConnected()) {
+      this.qiSession.disconnect();
+    }
     this._services = {};
     this.set('connected', 'Disconnected');
     this.save_changes();
     this.changeStatus('Unavailable');
   }
 
-  private async checkConnection() {
+  private async checkConnection(requestID: number) {
     // Cannot reconnect without initial connection
     if (!this._ipAddress) {
       this.send({
         isError: true,
         data: 'Cannot connect without IP Address.',
+        requestID: requestID,
       });
       this.set('counter', this.get('counter') + 1);
       this.save_changes();
@@ -124,19 +130,20 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     // Reconnect if possible
     if (!this.qiSession.isConnected()) {
-      await this.connect(this._ipAddress, this._port);
+      this.disconnect();
+      await this.connect(this._ipAddress, this._port, requestID);
     }
     return true;
   }
 
-  private async createService(serviceName: string) {
-    const isConnected: boolean = await this.checkConnection();
+  private async createService(serviceName: string, requestID: number) {
+    const isConnected: boolean = await this.checkConnection(requestID);
     if (!isConnected) {
       return;
     }
 
     // Skip if service exists already
-    if (this._services[serviceName] !== undefined) {
+    if (this._services[serviceName]) {
       console.log('Service ' + serviceName + ' exists.');
       return;
     }
@@ -144,12 +151,26 @@ export class NaoRobotModel extends DOMWidgetModel {
     this.changeStatus('Creating service ' + serviceName);
     const servicePromise = this.qiSession.service(serviceName);
 
+    // TODO: This func is not async in the kernel. To show error messages
+    // the request ID is the next one which is used to call the service
     const naoService = await servicePromise
       .then((resolution: any) => {
+        this.send({
+          isError: false,
+          data: true, // TODO: resolution ?? true,
+          requestID: requestID + 1, // Note above
+        });
         return resolution;
       })
       .catch((rejection: string) => {
         this.changeStatus(rejection);
+        this.send({
+          isError: true,
+          data: rejection,
+          requestID: requestID + 1, // Note above
+        });
+        this.set('counter', this.get('counter') + 1);
+        this.save_changes();
         return rejection;
       });
 
@@ -164,27 +185,49 @@ export class NaoRobotModel extends DOMWidgetModel {
     serviceName: string,
     methodName: string,
     args: any,
-    _kwargs: any
+    _kwargs: any,
+    requestID: number
   ) {
-    const isConnected: boolean = await this.checkConnection();
+    const isConnected: boolean = await this.checkConnection(requestID);
     if (!isConnected) {
       return;
     }
 
     // Wait for service to become available
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    this.changeStatus('Waiting for service ' + serviceName);
 
     // Timeout after ~10 seconds
     for (let i = 0; i < 100; i++) {
-      if (this._services[serviceName] !== undefined) {
+      if (this._services[serviceName]) {
         console.log('Service available after ', i / 10.0, ' seconds.');
+        this.changeStatus(serviceName + ' available');
         break;
       }
       await sleep(100);
     }
 
-    if (this._services[serviceName][methodName] === undefined) {
-      this.changeStatus(methodName + ' does not exist for ' + serviceName);
+    if (!this._services[serviceName]) {
+      this.changeStatus(serviceName + ' not available');
+      this.send({
+        isError: true,
+        data: serviceName + ' not available',
+        requestID: requestID,
+      });
+      this.set('counter', this.get('counter') + 1);
+      this.save_changes();
+      return;
+    }
+
+    if (!this._services[serviceName][methodName]) {
+      this.changeStatus(`${methodName} does not exist for ${serviceName}`);
+      this.send({
+        isError: true,
+        data: `${methodName} does not exist for ${serviceName}`,
+        requestID: requestID,
+      });
+      this.set('counter', this.get('counter') + 1);
+      this.save_changes();
       return;
     }
 
@@ -197,6 +240,7 @@ export class NaoRobotModel extends DOMWidgetModel {
         this.send({
           isError: false,
           data: resolution ?? true,
+          requestID: requestID,
         });
       })
       .catch((rejection: string) => {
@@ -204,6 +248,7 @@ export class NaoRobotModel extends DOMWidgetModel {
         this.send({
           isError: true,
           data: rejection,
+          requestID: requestID,
         });
       });
 
@@ -216,7 +261,11 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     switch (cmd) {
       case 'connect':
-        await this.connect(commandData['ipAddress'], commandData['port']);
+        await this.connect(
+          commandData['ipAddress'],
+          commandData['port'],
+          commandData['requestID']
+        );
         break;
 
       case 'disconnect':
@@ -224,7 +273,10 @@ export class NaoRobotModel extends DOMWidgetModel {
         break;
 
       case 'createService':
-        this.createService(commandData['service']);
+        await this.createService(
+          commandData['service'],
+          commandData['requestID']
+        );
         break;
 
       case 'callService':
@@ -232,7 +284,8 @@ export class NaoRobotModel extends DOMWidgetModel {
           commandData['service'],
           commandData['method'],
           commandData['args'],
-          commandData['kwargs']
+          commandData['kwargs'],
+          commandData['requestID']
         );
         break;
     }
