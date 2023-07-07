@@ -13,3 +13,4 @@ dependencies:
   - yarn=1.21
   - pytest
   - nbval
+  - pytest-check-links
