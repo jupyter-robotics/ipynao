@@ -15,7 +15,7 @@ jobs:
 
       - name: Verify paths
         run: |
-          echo "CURRENT DIR"
+          echo "CURRENT DIR ${GITHUB_WORKSPACE}"
           pwd
           echo "FIND IPYNAO"
           ls -al
@@ -23,7 +23,8 @@ jobs:
       - name: Install docs dependencies
         uses: mamba-org/setup-micromamba@v1
         with:
-          environment-file: ./docs/env.yaml
+          environment-file: ${GITHUB_WORKSPACE}/docs/env.yaml
+          environment-name: docs-env
           cache-environment: true
 
       - name: Activate environment and install package
