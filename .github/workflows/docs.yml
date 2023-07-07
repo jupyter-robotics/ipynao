@@ -23,8 +23,8 @@ jobs:
             bash
 
       - name: Install package in environment
-        run:  python -c "pip install ."
-        shell: bash -el {0}
+        run:  python -m pip install .
+        shell: micromamba-shell {0}
 
       - name: Check docs can be build + links
         working-directory: docs
