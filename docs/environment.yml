@@ -12,3 +12,4 @@ dependencies:
   - nbsphinx-link
   - yarn=1.21
   - pytest
+  - nbval
