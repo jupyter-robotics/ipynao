@@ -1,5 +1,5 @@
 
-name: ipynao_docs
+name: docs-env
 channels:
   - conda-forge
 dependencies:
@@ -10,3 +10,7 @@ dependencies:
   - sphinx_rtd_theme
   - nbsphinx
   - nbsphinx-link
+  - yarn=1.21
+  - pytest
+  - nbval
+  - pytest-check-links
