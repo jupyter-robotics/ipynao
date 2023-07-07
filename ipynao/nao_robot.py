@@ -54,7 +54,7 @@ class NaoRobotService():
         
         response = self.widget.response[request_id]['data']
         del self.widget.response[request_id]
-        
+
         return response
         
 
@@ -109,10 +109,10 @@ class NaoRobotWidget(DOMWidget):
 
                 if (response['isError']):
                     future.set_exception(Exception(response['data']))
-                    output.append_stderr(response['data'])
+                    output.append_stderr(str(response['data']) + '\n')
                 else:
                     future.set_result(response['data'])
-                    output.append_stdout(response['data'])
+                    output.append_stdout(str(response['data']) + '\n')
 
             else:
                 future.set_result(change) 
