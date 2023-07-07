@@ -17,9 +17,7 @@ jobs:
         uses: mamba-org/setup-micromamba@v1
         with:
           environment-file: docs/env.yaml
-          environment-name: docs-env
           cache-environment: true
-          micromamba-version: '1.4.0-9'
 
       - name: Activate environment and install package
         run: |
