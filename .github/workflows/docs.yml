@@ -1,0 +1,34 @@
+name: Build Docs
+
+on:
+  push:
+    branches: main
+  pull_request:
+    branches: "*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install docs dependencies
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          environment-file: docs/env.yaml
+          environment-name: ipynao_docs
+          micromamba-version: '1.4.1'
+
+      - name: Activate environment and install package
+        run: |
+          eval "$(micromamba shell hook --shell=bash)"
+          micromamba activate ipynao_docs
+          python -m pip install .
+
+      - name: Check docs can be build + links
+        working-directory: docs
+        run: |
+          sudo apt install -y pandoc
+          make html
+          python -m pytest --check-links
