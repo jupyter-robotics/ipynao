@@ -17,14 +17,14 @@ jobs:
         uses: mamba-org/setup-micromamba@v1
         with:
           environment-file: docs/env.yaml
-          environment-name: ipynao_docs
+          environment-name: docs-env
           cache-environment: true
-          micromamba-version: '1.4.1'
+          micromamba-version: '1.4.0-9'
 
       - name: Activate environment and install package
         run: |
           eval "$(micromamba shell hook --shell=bash)"
-          micromamba activate ipynao_docs
+          micromamba activate docs-env
           python -m pip install .
 
       - name: Check docs can be build + links

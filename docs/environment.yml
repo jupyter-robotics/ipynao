@@ -1,5 +1,5 @@
 
-name: ipynao_docs
+name: docs-env
 channels:
   - conda-forge
 dependencies:
