@@ -1,9 +1,8 @@
 
 # ipynao
 
-[![Build Status](https://travis-ci.org/QuantStack/ipynao.svg?branch=main)](https://travis-ci.org/QuantStack/ipynao)
-[![codecov](https://codecov.io/gh/QuantStack/ipynao/branch/main/graph/badge.svg)](https://codecov.io/gh/QuantStack/ipynao)
-
+[![Build Status](https://github.com/jupyter-robotics/ipynao/actions/workflows/build.yml/badge.svg)](https://github.com/jupyter-robotics/ipynao/actions/workflows/build.yml)
+[![lite-badge](https://jupyterlite.rtfd.io/en/latest/_static/badge-launch.svg)](https://jupyter-robotics.dev/lab/index.html?path=introduction.ipynb)
 
 A widget library for controlling Nao
 
