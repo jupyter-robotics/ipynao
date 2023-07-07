@@ -13,25 +13,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Verify paths
-        run: |
-          echo "CURRENT DIR ${GITHUB_WORKSPACE}"
-          pwd
-          echo "FIND IPYNAO"
-          ls -al
-
       - name: Install docs dependencies
         uses: mamba-org/setup-micromamba@v1
         with:
           environment-file: docs/environment.yml
           environment-name: docs-env
           cache-environment: true
+          init-shell: >-
+            bash
 
-      - name: Activate environment and install package
-        run: |
-          eval "$(micromamba shell hook --shell=bash)"
-          micromamba activate docs-env
-          python -m pip install .
+      - name: Install package in environment
+        run:  python -c "pip install ."
+        shell: bash -el {0}
 
       - name: Check docs can be build + links
         working-directory: docs
@@ -39,3 +32,4 @@ jobs:
           sudo apt install -y pandoc
           make html
           python -m pytest --check-links
+        shell: micromamba-shell {0}
