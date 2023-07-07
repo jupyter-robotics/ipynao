@@ -155,11 +155,6 @@ export class NaoRobotModel extends DOMWidgetModel {
     // the request ID is the next one which is used to call the service
     const naoService = await servicePromise
       .then((resolution: any) => {
-        this.send({
-          isError: false,
-          data: true, // TODO: resolution ?? true,
-          requestID: requestID + 1, // Note above
-        });
         return resolution;
       })
       .catch((rejection: string) => {

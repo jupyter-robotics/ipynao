@@ -11,7 +11,7 @@ TODO: Add module docstring
 from ipywidgets import DOMWidget, Output
 from traitlets import Unicode, Integer
 from ._frontend import module_name, module_version
-import asyncio
+from asyncio import ensure_future, Future
 
 
 class NaoRobotService():
@@ -36,33 +36,20 @@ class NaoRobotService():
         self.widget.request_id += 1
         return data
     
-    def call_service(self, method_name, *args, **kwargs):
-        data = self._create_msg(method_name, *args, **kwargs)
-        self.widget.send(data)
 
-    async def async_call_service(self, method_name, *args, **kwargs):
+    async def call_service(self, method_name, *args, **kwargs):
         data = self._create_msg(method_name, *args, **kwargs)
         self.widget.send(data)
         request_id = data['requestID']
 
-        try:
-            self.output.clear_output()
-            self.output.append_stdout('Calling service... \n')
-            await self.widget.wait_for_change('counter', self.output, request_id)
-        except Exception as e:
-            return e
-        
-        response = self.widget.response[request_id]['data']
-        del self.widget.response[request_id]
+        self.output.append_stdout(f'Calling service {self.name}...\n')
+        future = await self.widget.wait_for_change('counter', self.output, request_id)
 
-        return response
+        return future
         
 
     def __getattr__(self, method_name):
-        if (method_name[:6] == 'async_'):
-            return lambda *x, **y: self.async_call_service(method_name[6:], *x, **y)
-        else:
-            return lambda *x, **y: self.call_service(method_name, *x, **y)
+        return lambda *x, **y: ensure_future(self.call_service(method_name, *x, **y))
 
 
 class NaoRobotWidget(DOMWidget):
@@ -95,7 +82,7 @@ class NaoRobotWidget(DOMWidget):
 
 
     def wait_for_change(widget, value_name, output=Output(), request_id=0):
-        future = asyncio.Future()
+        future = Future()
         widget.response[request_id] = {
             'isError': False,
             'data': None
@@ -108,17 +95,19 @@ class NaoRobotWidget(DOMWidget):
                 widget.unobserve(get_value_change, names=value_name)
 
                 if (response['isError']):
-                    future.set_exception(Exception(response['data']))
+                    if not future.done():
+                        # TODO: Fix "Task exception was never retrieved"
+                        # future.set_exception(Exception(response['data']))
+                        future.set_result(Exception(response['data']))
                     output.append_stderr(str(response['data']) + '\n')
                 else:
-                    future.set_result(response['data'])
+                    if not future.done():
+                        future.set_result(response['data'])
                     output.append_stdout(str(response['data']) + '\n')
 
-            else:
-                future.set_result(change) 
         
         widget.observe(get_value_change, names=value_name)
-        return future    
+        return future
 
 
     def connect(self, ip_address='nao.local', port='80'):      
