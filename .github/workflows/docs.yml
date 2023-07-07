@@ -23,7 +23,7 @@ jobs:
       - name: Install docs dependencies
         uses: mamba-org/setup-micromamba@v1
         with:
-          environment-file: /home/runner/work/ipynao/ipynao/docs/env.yaml
+          environment-file: docs/environment.yml
           environment-name: docs-env
           cache-environment: true
 
