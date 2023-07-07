@@ -11,3 +11,4 @@ dependencies:
   - nbsphinx
   - nbsphinx-link
   - yarn=1.21
+  - pytest
