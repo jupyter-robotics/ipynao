@@ -6,7 +6,7 @@ Developer install
 To install a developer version of ipynao, you will first need to clone
 the repository::
 
-    git clone https://github.com/QuantStack/ipynao
+    git clone https://github.com/jupyter-robotics/ipynao
     cd ipynao
 
 Next, install it with a develop install using pip::
