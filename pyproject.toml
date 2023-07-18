@@ -55,7 +55,7 @@ test = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/QuantStack/ipynao"
+Homepage = "https://github.com/jupyter-robotics/ipynao"
 
 [tool.hatch.build]
 artifacts = [
