@@ -1,6 +1,6 @@
 {
   "name": "ipynao",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "A widget library for controlling Nao",
   "keywords": [
     "jupyter",
