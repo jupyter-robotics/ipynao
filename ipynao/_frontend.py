@@ -9,4 +9,4 @@ Information about the frontend package of the widgets.
 """
 
 module_name = "ipynao"
-module_version = "^0.6.1"
+module_version = "^0.6.2"

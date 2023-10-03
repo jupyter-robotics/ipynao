@@ -56,7 +56,7 @@ export class NaoRobotModel extends DOMWidgetModel {
 
   private validateIPaddress(ipAddress: string) {
     // TODO: validate port also
-    if (ipAddress === 'nao.local') {
+    if (ipAddress.endsWith('.local')) {
       return true;
     } else {
       const regexp = new RegExp(
@@ -71,7 +71,11 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     this.changeStatus('Establishing connection');
 
-    if (!this.validateIPaddress(ipAddress)) {
+    if (!ipAddress) {
+      // Use the IP address/domain name of the current page
+      ipAddress = window.location.hostname;
+      // Note: we don't validate this
+    } else if (!this.validateIPaddress(ipAddress)) {
       this.changeStatus('Invalid IP address');
       console.warn('IP Address ', ipAddress, ' is not valid');
       return;
@@ -102,7 +106,10 @@ export class NaoRobotModel extends DOMWidgetModel {
       this.changeStatus(
         'Connection to ' + ipAddress + ' could not be established.'
       );
+      return false;
     }
+
+    return true;
   }
 
   disconnect() {
@@ -131,7 +138,10 @@ export class NaoRobotModel extends DOMWidgetModel {
     // Reconnect if possible
     if (!this.qiSession.isConnected()) {
       this.disconnect();
-      await this.connect(this._ipAddress, this._port, requestID);
+      const connectSuccess = await this.connect(this._ipAddress, this._port, requestID);
+      if (!connectSuccess) {
+        return false;
+      }
     }
     return true;
   }
@@ -185,6 +195,13 @@ export class NaoRobotModel extends DOMWidgetModel {
   ) {
     const isConnected: boolean = await this.checkConnection(requestID);
     if (!isConnected) {
+      this.send({
+        isError: true,
+        data: "Unable to connect.",
+        requestID: requestID,
+      });
+      this.set('counter', this.get('counter') + 1);
+      this.save_changes();
       return;
     }
 
