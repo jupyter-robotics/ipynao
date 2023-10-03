@@ -12,17 +12,16 @@ from ipywidgets import DOMWidget, Output
 from traitlets import Unicode, Integer
 from ._frontend import module_name, module_version
 from asyncio import ensure_future, Future
+from IPython.display import display
 
 
 class NaoRobotService():
     name = None
     widget = None
-    output = None
 
-    def __init__(self, widget, service_name, output=Output()):
+    def __init__(self, widget, service_name):
         self.name = service_name
         self.widget = widget
-        self.output = output
 
     def _create_msg(self, method_name, *args, **kwargs):
         data = {}
@@ -42,8 +41,10 @@ class NaoRobotService():
         self.widget.send(data)
         request_id = data['requestID']
 
-        self.output.append_stdout(f'Calling service {self.name}...\n')
-        future = await self.widget.wait_for_change('counter', self.output, request_id)
+        output = Output()
+        display(output)
+        output.append_stdout(f'Calling service {self.name}...\n')
+        future = await self.widget.wait_for_change('counter', output, request_id)
 
         return future
         
@@ -51,6 +52,47 @@ class NaoRobotService():
     def __getattr__(self, method_name):
         return lambda *x, **y: ensure_future(self.call_service(method_name, *x, **y))
 
+
+class Robot():
+
+    def __init__(self) -> None:
+        self.widget = NaoRobotWidget()
+        display(self.widget)
+
+    
+    def _create_service(self, service_name):
+        data = {}
+        data['command'] = str('createService')
+        data['service'] = str(service_name)
+        data['requestID'] = self.widget.request_id
+        self.widget.send(data)
+        self.widget.request_id += 1
+        return NaoRobotService(self.widget, service_name)
+        # TODO: wait for service to become available
+
+    
+    def connect(self, ip_address='nao.local', port='80'):
+        data = {}
+        data['command'] = str('connect')
+        data['ipAddress'] = str(ip_address)
+        data['port'] = str(port)
+        data['requestID'] = self.widget.request_id
+        self.widget.send(data)
+        self.widget.request_id += 1
+
+    
+    def disconnect(self):
+        data = {}
+        data['command'] = str('disconnect')
+        data['requestID'] = self.request_id
+        self.send(data)
+        self.request_id += 1
+
+
+    def __getattr__(self, service_name):
+        print("Service: " + str(service_name)) # REMOVE
+        return self._create_service(service_name)
+    
 
 class NaoRobotWidget(DOMWidget):
     _model_name = Unicode('NaoRobotModel').tag(sync=True)
@@ -73,7 +115,6 @@ class NaoRobotWidget(DOMWidget):
 
 
     def _handle_frontend_msg(self, model, msg, buffer):
-        print('Received frontend msg: ', msg)
         request_id = msg['requestID']
         self.response[request_id] = {
             'isError': msg['isError'],
@@ -108,31 +149,3 @@ class NaoRobotWidget(DOMWidget):
         
         widget.observe(get_value_change, names=value_name)
         return future
-
-
-    def connect(self, ip_address='nao.local', port='80'):      
-        data = {}
-        data['command'] = str('connect')
-        data['ipAddress'] = str(ip_address)
-        data['port'] = str(port)
-        data['requestID'] = self.request_id
-        self.send(data)
-        self.request_id += 1
-
-    
-    def disconnect(self):
-        data = {}
-        data['command'] = str('disconnect')
-        data['requestID'] = self.request_id
-        self.send(data)
-        self.request_id += 1
-
-
-    def service(self, service_name, output=Output()):
-        data = {}
-        data['command'] = str('createService')
-        data['service'] = str(service_name)
-        data['requestID'] = self.request_id
-        self.send(data)
-        self.request_id += 1
-        return NaoRobotService(self, service_name, output)
