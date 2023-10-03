@@ -56,7 +56,7 @@ export class NaoRobotModel extends DOMWidgetModel {
 
   private validateIPaddress(ipAddress: string) {
     // TODO: validate port also
-    if (ipAddress === 'nao.local') {
+    if (ipAddress.endsWith('.local')) {
       return true;
     } else {
       const regexp = new RegExp(
@@ -71,7 +71,11 @@ export class NaoRobotModel extends DOMWidgetModel {
 
     this.changeStatus('Establishing connection');
 
-    if (!this.validateIPaddress(ipAddress)) {
+    if (!ipAddress) {
+      // Use the IP address/domain name of the current page
+      ipAddress = window.location.hostname;
+      // Note: we don't validate this
+    } else if (!this.validateIPaddress(ipAddress)) {
       this.changeStatus('Invalid IP address');
       console.warn('IP Address ', ipAddress, ' is not valid');
       return;

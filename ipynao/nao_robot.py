@@ -34,7 +34,7 @@ class NaoRobotService():
         data['requestID'] = self.widget.request_id
         self.widget.request_id += 1
         return data
-    
+
 
     async def call_service(self, method_name, *args, **kwargs):
         data = self._create_msg(method_name, *args, **kwargs)
@@ -47,7 +47,7 @@ class NaoRobotService():
         future = await self.widget.wait_for_change('counter', output, request_id)
 
         return future
-        
+
 
     def __getattr__(self, method_name):
         return lambda *x, **y: ensure_future(self.call_service(method_name, *x, **y))
@@ -59,7 +59,7 @@ class Robot():
         self.widget = NaoRobotWidget()
         display(self.widget)
 
-    
+
     def _create_service(self, service_name):
         data = {}
         data['command'] = str('createService')
@@ -70,17 +70,17 @@ class Robot():
         return NaoRobotService(self.widget, service_name)
         # TODO: wait for service to become available
 
-    
-    def connect(self, ip_address='nao.local', port='80'):
+
+    def connect(self, ip_address='', port='80'):
         data = {}
         data['command'] = str('connect')
-        data['ipAddress'] = str(ip_address)
+        data['ipAddress'] = str(ip_address) # an empty IP address should become the local domain.
         data['port'] = str(port)
         data['requestID'] = self.widget.request_id
         self.widget.send(data)
         self.widget.request_id += 1
 
-    
+
     def disconnect(self):
         data = {}
         data['command'] = str('disconnect')
@@ -92,7 +92,7 @@ class Robot():
     def __getattr__(self, service_name):
         print("Service: " + str(service_name)) # REMOVE
         return self._create_service(service_name)
-    
+
 
 class NaoRobotWidget(DOMWidget):
     _model_name = Unicode('NaoRobotModel').tag(sync=True)
@@ -132,7 +132,7 @@ class NaoRobotWidget(DOMWidget):
         def get_value_change(change):
             response = widget.response[request_id]
 
-            if (response['data'] != None): 
+            if (response['data'] != None):
                 widget.unobserve(get_value_change, names=value_name)
 
                 if (response['isError']):
@@ -146,6 +146,5 @@ class NaoRobotWidget(DOMWidget):
                         future.set_result(response['data'])
                     output.append_stdout(str(response['data']) + '\n')
 
-        
         widget.observe(get_value_change, names=value_name)
         return future
