@@ -35,7 +35,7 @@ class NaoRobotService():
         data['requestID'] = self.widget.request_id
         self.widget.request_id += 1
         return data
-    
+
 
     async def call_service(self, method_name, *args, **kwargs):
         data = self._create_msg(method_name, *args, **kwargs)
@@ -46,7 +46,7 @@ class NaoRobotService():
         future = await self.widget.wait_for_change('counter', self.output, request_id)
 
         return future
-        
+
 
     def __getattr__(self, method_name):
         return lambda *x, **y: ensure_future(self.call_service(method_name, *x, **y))
@@ -91,7 +91,7 @@ class NaoRobotWidget(DOMWidget):
         def get_value_change(change):
             response = widget.response[request_id]
 
-            if (response['data'] != None): 
+            if (response['data'] != None):
                 widget.unobserve(get_value_change, names=value_name)
 
                 if (response['isError']):
@@ -105,12 +105,12 @@ class NaoRobotWidget(DOMWidget):
                         future.set_result(response['data'])
                     output.append_stdout(str(response['data']) + '\n')
 
-        
+
         widget.observe(get_value_change, names=value_name)
         return future
 
 
-    def connect(self, ip_address='nao.local', port='80'):      
+    def connect(self, ip_address='', port='80'):
         data = {}
         data['command'] = str('connect')
         data['ipAddress'] = str(ip_address)
@@ -119,7 +119,7 @@ class NaoRobotWidget(DOMWidget):
         self.send(data)
         self.request_id += 1
 
-    
+
     def disconnect(self):
         data = {}
         data['command'] = str('disconnect')
