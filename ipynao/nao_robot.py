@@ -137,5 +137,11 @@ class NaoRobotWidget(DOMWidget):
         self.request_id += 1
         return NaoRobotService(self, service_name, output)
 
-# Syntactic sugar - the two may end up being separate classes.
-Robot = NaoRobotWidget
+
+# Syntactic sugar - there is a plan to swap this out as a separate class.
+class Robot(NaoRobotWidget):
+    def __getattr__(self, service_name):
+        if service_name.startswith("AL"):
+            return self._create_service(service_name)
+        else:
+            raise AttributeError
