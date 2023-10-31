@@ -142,6 +142,6 @@ class NaoRobotWidget(DOMWidget):
 class Robot(NaoRobotWidget):
     def __getattr__(self, service_name):
         if service_name.startswith("AL"):
-            return self._create_service(service_name)
+            return self.service(service_name)
         else:
             raise AttributeError

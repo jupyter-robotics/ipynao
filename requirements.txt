@@ -19,7 +19,7 @@ jupyterlab_miami_nights
 ipywidgets>=8.1.0,<9
 
 # Python: ipynao library for Nao robot
-ipynao>=0.7.1
+ipynao>=0.7.3
 
 # For examples with images
 Pillow
