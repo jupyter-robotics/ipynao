@@ -136,3 +136,6 @@ class NaoRobotWidget(DOMWidget):
         self.send(data)
         self.request_id += 1
         return NaoRobotService(self, service_name, output)
+
+# Syntactic sugar - the two may end up being separate classes.
+Robot = NaoRobotWidget
